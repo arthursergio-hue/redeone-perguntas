@@ -7,7 +7,10 @@ window.REDEONE = (() => {
   const ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtraHptdmNxY2xqcHRsbnRsbXdtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1MzAwODIsImV4cCI6MjA5MzEwNjA4Mn0.D7-f7eagyQHvIGbTV6yyXAKB7uvp7gCmKUQA2mN2Naw";
   const params = new URLSearchParams(location.search);
   return {
-    evento: params.get("evento") || (location.pathname.includes("dinamica") ? "rede-one-paulo" : "rede-one-2026"),
+    // sem ?evento= a tela segue "a palestra que está no telão agora" (o Arthur troca pelo controle)
+    evento: params.get("evento") || (location.pathname.includes("dinamica") ? "rede-one-paulo" : "ativo"),
+    eventoReal: null,
+    chavePin: "redeone.pin",
     api: local && params.get("api") !== "real" ? "/api" : `${SUPABASE_URL}/functions/v1/redeone`,
     supabaseUrl: SUPABASE_URL,
     anon: ANON,
@@ -25,21 +28,31 @@ window.redeoneApi = async function (op, dados = {}) {
   let j = null;
   try { j = await r.json(); } catch { /* sem corpo */ }
   if (!j) throw new Error("rede");
+  if (j.evento_id && j.evento_id !== c.eventoReal) { c.eventoReal = j.evento_id; window._redeoneTrocouEvento?.(); }
   return j;
 };
 
 // Avisa "mudou" em tempo real (broadcast do Supabase). Sempre há polling de reserva.
+// Canais: o da palestra em uso e o "ativo" (avisa quando o Arthur troca a palestra do telão).
 window.redeoneAoVivo = function (aoMudar, intervaloMs) {
   const c = window.REDEONE;
   let timer = setInterval(aoMudar, intervaloMs);
   if (!c.realtime || !window.supabase) return;
   try {
     const cli = window.supabase.createClient(c.supabaseUrl, c.anon);
-    cli.channel(`redeone:${c.evento}`)
-      .on("broadcast", { event: "mudou" }, () => aoMudar())
-      .subscribe((s) => {
-        if (s === "SUBSCRIBED") { clearInterval(timer); timer = setInterval(aoMudar, Math.max(intervaloMs, 10000)); }
-      });
+    let canalEvento = null, conectados = 0;
+    const conectou = (s) => {
+      if (s === "SUBSCRIBED" && ++conectados >= 1) { clearInterval(timer); timer = setInterval(aoMudar, Math.max(intervaloMs, 8000)); }
+    };
+    cli.channel("redeone:ativo").on("broadcast", { event: "mudou" }, () => aoMudar()).subscribe(conectou);
+    const assinar = () => {
+      const id = c.eventoReal || (c.evento !== "ativo" ? c.evento : null);
+      if (!id) return;
+      if (canalEvento) cli.removeChannel(canalEvento);
+      canalEvento = cli.channel(`redeone:${id}`).on("broadcast", { event: "mudou" }, () => aoMudar()).subscribe(conectou);
+    };
+    window._redeoneTrocouEvento = assinar;
+    assinar();
   } catch { /* fica no polling */ }
 };
 

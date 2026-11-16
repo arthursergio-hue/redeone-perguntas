@@ -27,7 +27,7 @@ async function hashIp(req: Request): Promise<string | null> {
 const ACOES = new Set(["aprovar", "responder", "ocultar", "fixar", "desafixar", "pendente", "destacar",
   "tirar_destaque", "ocultar_resposta", "mostrar_resposta"]);
 const RODADA = new Set(["iniciar", "proxima", "anterior", "mais30", "pausar", "retomar", "zerar"]);
-const COM_PIN = new Set(["entrar", "listar", "agir", "config", "slide", "rodada", "mesas", "upload_url"]);
+const COM_PIN = new Set(["entrar", "listar", "agir", "config", "slide", "rodada", "mesas", "upload_url", "ativar"]);
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
@@ -36,11 +36,14 @@ Deno.serve(async (req) => {
   let b: Record<string, any>;
   try { b = await req.json(); } catch { return json({ ok: false, erro: "json" }, 400); }
 
-  const evento = String(b.evento ?? "").slice(0, 60);
-  if (!/^[a-z0-9-]{3,60}$/.test(evento)) return json({ ok: false, erro: "evento" }, 400);
+  const pedido = String(b.evento ?? "").slice(0, 60);
+  if (!/^[a-z0-9-]{3,60}$/.test(pedido)) return json({ ok: false, erro: "evento" }, 400);
   const ip = await hashIp(req);
 
   try {
+    // "ativo" = a palestra que está no telão agora (um QR Code e um telão para a conferência inteira)
+    const [{ id: evento }] = await sql`select redeone.resolver(${pedido}) as id`;
+    if (!evento) return json({ ok: false, erro: "evento" }, 404);
     if (b.op === "enviar") {
       const [r] = await sql`select redeone.enviar(${evento}, ${String(b.texto ?? "")},
         ${b.nome ? String(b.nome) : null}, ${String(b.dispositivo ?? "")}, ${ip}) as r`;
@@ -49,6 +52,11 @@ Deno.serve(async (req) => {
     if (b.op === "responder") {
       const [r] = await sql`select redeone.responder(${evento}, ${Number(b.grupo) || null}, ${String(b.texto ?? "")},
         ${String(b.dispositivo ?? "")}, ${ip}) as r`;
+      return json(r.r);
+    }
+    if (b.op === "responder_pastor") {
+      const [r] = await sql`select redeone.responder_pastor(${evento}, ${String(b.texto ?? "")},
+        ${b.nome ? String(b.nome) : null}, ${String(b.dispositivo ?? "")}, ${ip}) as r`;
       return json(r.r);
     }
     if (b.op === "telao") {
@@ -75,6 +83,9 @@ Deno.serve(async (req) => {
       case "rodada":
         if (!RODADA.has(b.acao)) return json({ ok: false, erro: "acao" }, 400);
         await sql`select redeone.controle_rodada(${evento}, ${b.acao})`;
+        break;
+      case "ativar":
+        await sql`select redeone.controle_ativar(${String(b.alvo ?? "")})`;
         break;
       case "mesas":
         await sql`select redeone.controle_mesas(${evento}, ${sql.json(Array.isArray(b.mesas) ? b.mesas : [])})`;

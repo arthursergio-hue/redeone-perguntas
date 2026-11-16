@@ -1,35 +1,31 @@
 # Rede One · perguntas ao vivo
 
 App web para a **Conferência Rede One** (IBZS, sexta 20/11/2026, 15h).
-Palestras: *Filhos: a fé começa em casa* (Pastor Pedro) e *Chamados para servir* (Pastor Paulo).
-Um QR Code só: a tela do celular muda sozinha conforme o evento (perguntas ou dinâmica).
+Palestras: *Filhos: a fé começa em casa* (Pastor Pedro, evento `rede-one-2026`) e *Chamados para servir*
+(Pastor Paulo, evento `rede-one-paulo`).
 
-## Palestra do Pastor Pedro (evento `rede-one-2026`)
-
-| Tela | Para quem | O que faz |
-|---|---|---|
-| `web/perguntar.html` | público (QR Code) | pergunta anônima ou com nome; 1 a cada 30 s; filtro de palavrão |
-| `web/telao.html` | projetor | **Perguntas**: cartões ao vivo, fixada em destaque, QR. **Apresentação**: os slides do PDF em tela cheia com a coluna de perguntas ao lado; passa pelo passador/setas (pede o PIN uma vez). **Pergunta inteira**: uma pergunta grande com o fundo desfocado |
-| `web/controle.html` | Arthur (PIN) | aprovar, fixar, ocultar, respondida, desfazer; 📺 mostrar inteira; modo do telão; ◀ ▶ dos slides com prévia; subir o PDF; CSV |
-
-## Dinâmica do Pastor Paulo (evento `rede-one-paulo`)
+**Um QR Code e um telão para a conferência inteira:** sem `?evento=`, o celular e o telão seguem a palestra
+marcada como **NO TELÃO** no controle. O Arthur troca de palestra pelo celular.
 
 | Tela | Para quem | O que faz |
 |---|---|---|
-| `web/dinamica.html` | grupos (mesmo QR) | escolhe o grupo (1 a 4), vê a mesa da rodada e a pergunta, manda respostas, vê o que a mesa já recebeu |
-| `web/dinamica-telao.html` | projetor | antes: QR grande; rodadas: 4 colunas (mesa, pergunta, grupo que está lá, respostas) + cronômetro; confronto: mesa por mesa, respostas × "o que o texto ensina" |
-| `web/dinamica-controle.html` | Arthur (PIN) | começar / próxima rodada / pausar / +30 s / voltar; tempo por mesa; perguntas das mesas e pontos do texto; mesa do confronto; ocultar resposta; CSV |
+| `web/perguntar.html` | público (QR Code) | pergunta ao palestrante, anônima ou com nome (1 a cada 30 s). Quando o pastor abre a pergunta dele, aparece a aba **Responder o pastor** (abre sozinha), anônimo ou com nome (1 a cada 10 s). Filtro de palavrão |
+| `web/telao.html` | projetor | **Perguntas**: cartões ao vivo, fixada em destaque, QR. **Slides**: PDF em tela cheia com a coluna de perguntas; passador/setas (PIN uma vez). **Respostas**: a pergunta do pastor em cima e o mural das respostas, com o total. **Pergunta inteira**: uma pergunta grande com o fundo desfocado |
+| `web/controle.html` | Arthur (PIN) | escolhe a palestra e põe no telão; aprovar, fixar, ocultar, respondida, desfazer, 📺 mostrar inteira; modo do telão (Perguntas / Slides / Respostas); ◀ ▶ com prévia e upload do PDF; **pergunta do pastor**: escrever, abrir e mostrar, encerrar, ocultar respostas; CSV com perguntas e respostas |
 
-Rodízio: na rodada *r* o grupo *g* fica na mesa `((g-1)+(r-1)) % 4 + 1` — cada grupo passa uma vez por mesa.
+As respostas à pergunta do pastor vão direto ao mural (sem aprovação); o Arthur oculta pelo controle se precisar.
+
+A dinâmica de mesas (`web/dinamica*.html`, `dev/simular-dinamica.mjs`) ficou guardada sem uso: o Pastor Paulo
+preferiu o papel, que faz parte da metodologia dele.
 
 ## Como funciona
 
 - Páginas estáticas (sem build). `web/config.js` escolhe o servidor: em `localhost` usa o servidor de teste;
   publicado, usa a Edge Function `redeone` do Supabase da igreja.
-- Banco: schema `redeone` (`supabase/migrations/001…` e `002…`). Público não tem acesso às tabelas; tudo passa
-  pela Edge Function (`supabase/functions/redeone`). PIN só como hash, trava após 10 erros em 10 min.
-  PDFs no bucket público `redeone` (só PDF, até 50 MB), enviados por link assinado depois do PIN.
-- Tempo real: broadcast do banco (`redeone:<evento>`) + consulta a cada 1,5–2,5 s.
+- Banco: schema `redeone` (`supabase/migrations/001…003`). Público não tem acesso às tabelas; tudo passa pela
+  Edge Function (`supabase/functions/redeone`). Um PIN para a conferência, só como hash, trava após 10 erros em
+  10 min. PDFs no bucket público `redeone` (só PDF, até 50 MB), enviados por link assinado depois do PIN.
+- Tempo real: broadcast do banco (`redeone:<evento>` e `redeone:ativo`) + consulta a cada 1,5–5 s.
 
 ## Rodar local
 
@@ -37,8 +33,8 @@ Rodízio: na rodada *r* o grupo *g* fica na mesa `((g-1)+(r-1)) % 4 + 1` — cad
 node dev/servidor.mjs
 ```
 
-http://localhost:5174 (PIN local `1234`). `node dev/semear.mjs` (perguntas de exemplo + regras) e
-`node dev/simular-dinamica.mjs 5` (4 grupos, 4 rodadas e confronto). PDF de teste: `dev/exemplo-apresentacao.pdf`.
+http://localhost:5174 (PIN local `1234`). `node dev/semear.mjs` põe perguntas de exemplo e confere as regras.
+PDF de teste: `dev/exemplo-apresentacao.pdf`.
 
 ## Falta para publicar
 

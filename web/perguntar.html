@@ -10,15 +10,18 @@
 <link rel="stylesheet" href="estilo.css">
 <style>
   main { max-width: 520px; margin: 0 auto; padding: 28px 16px 40px; min-height: 100dvh; display: flex; flex-direction: column; }
-  header { text-align: center; margin-bottom: 22px; }
+  header { text-align: center; margin-bottom: 18px; }
   header .marca { font-size: 34px; }
   header p { margin: 6px 0 0; color: var(--texto-2); font-size: 17px; }
   .painel { background: var(--cartao); border: 1px solid var(--borda); border-radius: var(--raio); padding: 18px; box-shadow: var(--sombra); backdrop-filter: blur(8px); }
+  .abas { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 5px; border-radius: 16px; background: rgba(0,0,0,.25); border: 1px solid var(--borda); margin-bottom: 14px; }
+  .abas button { border: 0; border-radius: 12px; padding: 12px 6px; background: transparent; color: var(--texto-2); font-weight: 700; font-size: 15px; }
+  .abas button.ativo { background: var(--destaque); color: #061a63; }
+  .pastor { border-radius: 16px; padding: 16px; margin-bottom: 14px; background: linear-gradient(135deg, rgba(245,200,66,.22), rgba(245,200,66,.08)); border: 2px solid rgba(245,200,66,.8); }
+  .pastor .rot { font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--destaque); }
+  .pastor .perg { font-size: 21px; font-weight: 700; line-height: 1.3; margin-top: 6px; }
   label.titulo { display: block; font-weight: 700; font-size: 16px; margin-bottom: 8px; }
-  textarea {
-    width: 100%; min-height: 140px; resize: vertical; border-radius: 14px; padding: 14px;
-    background: rgba(0,0,0,.25); border: 1px solid var(--borda); font-size: 18px; line-height: 1.4; outline: none;
-  }
+  textarea { width: 100%; min-height: 130px; resize: vertical; border-radius: 14px; padding: 14px; background: rgba(0,0,0,.25); border: 1px solid var(--borda); font-size: 18px; line-height: 1.4; outline: none; }
   textarea:focus, input[type=text]:focus { border-color: var(--destaque); }
   .contador { text-align: right; font-size: 13px; color: var(--texto-3); margin-top: 6px; }
   .contador.alto { color: var(--destaque-2); }
@@ -46,8 +49,14 @@
     <p id="subtitulo">Mande sua pergunta</p>
   </header>
 
+  <div class="abas oculto" id="abas" role="tablist">
+    <button type="button" id="aba-resp" class="ativo">💬 Responder o pastor</button>
+    <button type="button" id="aba-perg">🙋 Fazer pergunta</button>
+  </div>
+
   <section class="painel" id="form">
-    <label class="titulo" for="texto">Sua pergunta</label>
+    <div class="pastor oculto" id="pastor"><div class="rot" id="pastor-rot">Pergunta do pastor</div><div class="perg" id="pastor-perg"></div></div>
+    <label class="titulo" for="texto" id="rotulo">Sua pergunta</label>
     <textarea id="texto" maxlength="280" placeholder="Escreva aqui a sua pergunta…" enterkeyhint="send"></textarea>
     <div class="contador" id="contador">0 / 280</div>
 
@@ -66,7 +75,7 @@
 
   <section class="painel tela-fim oculto" id="ok">
     <div class="icone">🙌</div>
-    <h2>Pergunta enviada!</h2>
+    <h2 id="ok-titulo">Pergunta enviada!</h2>
     <p id="ok-msg">Ela vai para o telão assim que for aprovada.</p>
     <div class="resumo" id="ok-resumo"></div>
     <button class="btn sec" id="outra">Mandar outra pergunta</button>
@@ -79,10 +88,11 @@
     <button class="btn sec" id="tentar">Ver de novo</button>
   </section>
 
-  <footer>Sem cadastro. Uma pergunta a cada 30 segundos.</footer>
+  <footer id="rodape">Sem cadastro. Uma pergunta a cada 30 segundos.</footer>
 </main>
 <div class="toast" id="toast"></div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="config.js"></script>
 <script>
 (() => {
@@ -92,14 +102,21 @@
 
   let dispositivo = ler("redeone.dispositivo");
   if (!dispositivo || !/^[A-Za-z0-9-]{8,64}$/.test(dispositivo)) {
-    dispositivo = (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2, 12));
+    dispositivo = crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2, 12);
     gravar("redeone.dispositivo", dispositivo);
   }
 
+  // dois tipos de envio: "pergunta" (para o palestrante) e "resposta" (à pergunta do pastor)
+  const TIPO = {
+    pergunta: { rotulo: "Sua pergunta", ph: "Escreva aqui a sua pergunta…", botao: "Enviar pergunta", op: "enviar", espera: 30, rodape: "Sem cadastro. Uma pergunta a cada 30 segundos." },
+    resposta: { rotulo: "Sua resposta", ph: "Escreva aqui a sua resposta…", botao: "Enviar resposta", op: "responder_pastor", espera: 10, rodape: "Sem cadastro. As respostas aparecem no telão." },
+  };
+  let tipo = "pergunta";
   let comNome = ler("redeone.modo") === "nome";
   $("nome").value = ler("redeone.nome") || "";
-  let esperaAte = Number(ler("redeone.esperaAte") || 0);
-  let timerEspera = null;
+  const esperaAte = { pergunta: Number(ler("redeone.esperaAte") || 0), resposta: Number(ler("redeone.esperaAte.resp") || 0) };
+  const rascunho = { pergunta: "", resposta: "" };
+  let evento = null, aberta = false, perguntaVista = null;
 
   function modo(nome) {
     comNome = nome;
@@ -107,51 +124,60 @@
     $("b-anonimo").classList.toggle("ativo", !nome); $("b-anonimo").setAttribute("aria-pressed", !nome);
     $("b-nome").classList.toggle("ativo", nome); $("b-nome").setAttribute("aria-pressed", nome);
     $("campo-nome").classList.toggle("oculto", !nome);
-    $("dica-modo").textContent = nome ? "Seu nome aparece junto com a pergunta no telão." : "Seu nome não aparece. Ninguém fica sabendo quem mandou.";
-    if (nome) setTimeout(() => $("nome").focus(), 50);
+    $("dica-modo").textContent = nome ? `Seu nome aparece junto com a ${tipo} no telão.` : "Seu nome não aparece. Ninguém fica sabendo quem mandou.";
+    if (nome && !$("nome").value) setTimeout(() => $("nome").focus(), 50);
     validar();
   }
   $("b-anonimo").onclick = () => modo(false);
   $("b-nome").onclick = () => modo(true);
 
+  function trocarTipo(novo) {
+    if (novo === tipo) return;
+    rascunho[tipo] = $("texto").value; tipo = novo; $("texto").value = rascunho[tipo];
+    const t = TIPO[tipo];
+    $("aba-resp").classList.toggle("ativo", tipo === "resposta"); $("aba-perg").classList.toggle("ativo", tipo === "pergunta");
+    $("pastor").classList.toggle("oculto", tipo !== "resposta");
+    $("rotulo").textContent = t.rotulo; $("texto").placeholder = t.ph; $("rodape").textContent = t.rodape;
+    esconderErro(); telas("form"); modo(comNome);
+  }
+  $("aba-resp").onclick = () => trocarTipo("resposta");
+  $("aba-perg").onclick = () => trocarTipo("pergunta");
+
   function validar() {
     const n = $("texto").value.trim().length;
     $("contador").textContent = `${$("texto").value.length} / 280`;
     $("contador").classList.toggle("alto", $("texto").value.length > 250);
-    const restante = Math.ceil((esperaAte - Date.now()) / 1000);
+    const restante = Math.ceil((esperaAte[tipo] - Date.now()) / 1000);
     const nomeOk = !comNome || $("nome").value.trim().length > 0;
-    $("enviar").disabled = n < 3 || !nomeOk || restante > 0 || $("enviar").dataset.enviando === "1";
-    if (restante > 0 && $("enviar").dataset.enviando !== "1") $("enviar").textContent = `Aguarde ${restante}s para enviar`;
-    else if ($("enviar").dataset.enviando !== "1") $("enviar").textContent = "Enviar pergunta";
+    const b = $("enviar");
+    if (b.dataset.enviando === "1") return;
+    b.disabled = n < (tipo === "resposta" ? 2 : 3) || !nomeOk || restante > 0;
+    b.textContent = restante > 0 ? `Aguarde ${restante}s para enviar` : TIPO[tipo].botao;
   }
+  setInterval(validar, 500);
   $("texto").addEventListener("input", () => { esconderErro(); validar(); });
   $("nome").addEventListener("input", () => { gravar("redeone.nome", $("nome").value); validar(); });
   $("texto").addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); if (!$("enviar").disabled) enviar(); } });
 
   function contarEspera(seg) {
-    esperaAte = Date.now() + seg * 1000; gravar("redeone.esperaAte", String(esperaAte));
-    clearInterval(timerEspera);
-    timerEspera = setInterval(() => { validar(); if (Date.now() >= esperaAte) clearInterval(timerEspera); }, 500);
+    esperaAte[tipo] = Date.now() + seg * 1000;
+    gravar(tipo === "pergunta" ? "redeone.esperaAte" : "redeone.esperaAte.resp", String(esperaAte[tipo]));
     validar();
   }
-  if (esperaAte > Date.now()) contarEspera(Math.ceil((esperaAte - Date.now()) / 1000));
 
   function mostrarErro(msg) { $("erro").textContent = msg; $("erro").classList.remove("oculto"); }
   function esconderErro() { $("erro").classList.add("oculto"); }
-
   const MSG = {
-    palavrao: "Ops! Sua pergunta tem palavras que não podem ir para o telão. Pode reescrever?",
-    curta: "Escreva uma pergunta um pouco maior.",
-    longa: "A pergunta passou de 280 caracteres. Pode resumir?",
+    palavrao: "Ops! O texto tem palavras que não podem ir para o telão. Pode reescrever?",
+    curta: "Escreva um pouco mais.",
+    longa: "Passou de 280 caracteres. Pode resumir?",
     repetida: "Essa pergunta já foi enviada há pouco. 😉",
     evento: "Não achamos este evento. Confira o QR Code.",
     dispositivo: "Não conseguimos identificar o aparelho. Recarregue a página.",
+    pastor_fechada: "As respostas à pergunta do pastor já foram encerradas.",
     servidor: "Deu um problema do nosso lado. Tente de novo em alguns segundos.",
   };
-
-  function telas(qual) {
-    ["form", "ok", "fechado"].forEach((id) => $(id).classList.toggle("oculto", id !== qual));
-  }
+  const telas = (qual) => ["form", "ok", "fechado"].forEach((id) => $(id).classList.toggle("oculto", id !== qual));
 
   async function enviar() {
     esconderErro();
@@ -159,30 +185,25 @@
     b.dataset.enviando = "1"; b.disabled = true; b.innerHTML = '<span class="spinner"></span> Enviando…';
     const texto = $("texto").value.trim();
     const nome = comNome ? $("nome").value.trim() : null;
+    const t = TIPO[tipo];
     try {
       if (!navigator.onLine) throw new Error("offline");
-      const r = await redeoneApi("enviar", { texto, nome, dispositivo });
+      const r = await redeoneApi(t.op, { texto, nome, dispositivo });
       if (r.ok) {
-        contarEspera(30);
-        $("ok-msg").textContent = r.status === "aprovada" ? "Ela já está no telão. 🎉" : "Ela vai para o telão assim que for aprovada.";
+        contarEspera(t.espera);
+        $("ok-titulo").textContent = tipo === "resposta" ? "Resposta enviada!" : "Pergunta enviada!";
+        $("ok-msg").textContent = tipo === "resposta" ? "Ela já está no telão. 🎉" : r.status === "aprovada" ? "Ela já está no telão. 🎉" : "Ela vai para o telão assim que for aprovada.";
         $("ok-resumo").textContent = texto;
-        const s = document.createElement("small"); s.textContent = nome ? `— ${nome}` : "— Anônimo";
-        $("ok-resumo").appendChild(s);
-        $("texto").value = "";
+        const s = document.createElement("small"); s.textContent = nome ? `— ${nome}` : "— Anônimo"; $("ok-resumo").appendChild(s);
+        $("outra").textContent = tipo === "resposta" ? "Mandar outra resposta" : "Mandar outra pergunta";
+        $("texto").value = ""; rascunho[tipo] = "";
         telas("ok");
-      } else if (r.erro === "fechado") {
-        telas("fechado");
-      } else if (r.erro === "espera") {
-        contarEspera(r.espera_s || 30);
-        mostrarErro(`Calma! Você pode mandar outra pergunta em ${r.espera_s || 30} segundos.`);
-      } else {
-        mostrarErro(MSG[r.erro] || MSG.servidor);
-      }
-    } catch (e) {
-      mostrarErro(navigator.onLine ? "Não conseguimos enviar. Confira a internet e tente de novo." : "Você está sem internet. Conecte e tente de novo — sua pergunta continua aqui.");
-    } finally {
-      b.dataset.enviando = "0"; validar();
-    }
+      } else if (r.erro === "fechado") { telas("fechado"); }
+      else if (r.erro === "espera") { contarEspera(r.espera_s || t.espera); mostrarErro(`Calma! Você pode mandar de novo em ${r.espera_s || t.espera} segundos.`); }
+      else { mostrarErro(MSG[r.erro] || MSG.servidor); if (r.erro === "pastor_fechada") carregar(); }
+    } catch {
+      mostrarErro(navigator.onLine ? "Não conseguimos enviar. Confira a internet e tente de novo." : "Você está sem internet. Conecte e tente de novo — seu texto continua aqui.");
+    } finally { b.dataset.enviando = "0"; validar(); }
   }
   $("enviar").onclick = enviar;
   $("outra").onclick = () => { telas("form"); validar(); $("texto").focus(); };
@@ -191,16 +212,32 @@
   async function carregar() {
     try {
       const r = await redeoneApi("telao");
-      if (r.ok) {
-        if (redeoneTelaCerta(r.evento.modo, "perguntar.html", "dinamica.html")) return;
-        $("titulo").textContent = r.evento.titulo; $("subtitulo").textContent = r.evento.subtitulo;
-        document.title = `${r.evento.titulo} · Perguntas`;
-        if (!r.evento.aberto) telas("fechado"); else if (!$("fechado").classList.contains("oculto")) telas("form");
+      if (!r.ok) return;
+      if (redeoneTelaCerta(r.evento.modo, "perguntar.html", "dinamica.html")) return;
+      const ev = r.evento;
+      $("titulo").textContent = ev.titulo; $("subtitulo").textContent = ev.subtitulo;
+      document.title = `${ev.titulo} · Perguntas`;
+      // troca de palestra no telão: recomeça limpo
+      if (evento && evento !== r.evento_id) { perguntaVista = null; }
+      evento = r.evento_id;
+      // pergunta do pastor aberta: aparece a aba e, na primeira vez, já abre nela
+      const temPastor = ev.pastor_aberta && !!ev.pergunta_pastor;
+      $("abas").classList.toggle("oculto", !temPastor);
+      $("pastor-perg").textContent = ev.pergunta_pastor || "";
+      $("pastor-rot").textContent = `Pergunta do ${ev.subtitulo.split("·").pop().trim() || "pastor"}`;
+      if (temPastor && perguntaVista !== ev.pergunta_pastor) {
+        perguntaVista = ev.pergunta_pastor;
+        if (!$("texto").value.trim()) { trocarTipo("resposta"); if (navigator.userActivation?.hasBeenActive) navigator.vibrate?.([60, 40, 60]); }
       }
-    } catch { /* segue com o padrão */ }
+      if (!temPastor && tipo === "resposta") trocarTipo("pergunta");
+      aberta = temPastor;
+      if (!ev.aberto && tipo === "pergunta") telas("fechado");
+      else if (!$("fechado").classList.contains("oculto")) telas("form");
+    } catch { /* segue com o que tem */ }
   }
   modo(comNome);
   carregar();
+  redeoneAoVivo(carregar, 5000);
 })();
 </script>
 </body>

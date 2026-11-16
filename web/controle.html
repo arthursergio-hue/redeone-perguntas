@@ -59,9 +59,28 @@
   dialog input { width: 100%; border-radius: 12px; padding: 12px; background: rgba(0,0,0,.25); border: 1px solid var(--borda); outline: none; font-size: 16px; }
   dialog .linha { display: flex; gap: 10px; margin-top: 18px; }
   dialog .linha .btn { flex: 1; font-size: 15px; padding: 12px; }
+  .palestras { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+  .palestras button { position: relative; border: 1px solid var(--borda); background: var(--cartao); color: var(--texto); border-radius: 14px; padding: 12px 8px; font-weight: 800; font-size: 15px; text-align: left; }
+  .palestras button small { display: block; font-weight: 600; font-size: 11px; color: var(--texto-3); margin-top: 2px; }
+  .palestras button.sel { background: var(--texto); color: #061a63; }
+  .palestras button.sel small { color: #3a4a8a; }
+  .palestras .ao-vivo { position: absolute; top: -9px; right: 10px; font-size: 10px; font-weight: 900; letter-spacing: .06em; color: #fff; background: #e5304d; padding: 2px 7px; border-radius: 99px; }
+  .por-telao { width: 100%; margin-bottom: 12px; font-size: 15px; padding: 12px; }
+  .pp { background: linear-gradient(135deg, rgba(245,200,66,.16), rgba(245,200,66,.05)); border: 1px solid rgba(245,200,66,.55); border-radius: 16px; padding: 14px; margin-bottom: 12px; }
+  .pp h3 { margin: 0 0 10px; font-size: 15px; color: var(--destaque); }
+  .pp textarea { width: 100%; min-height: 70px; border-radius: 12px; padding: 11px; background: rgba(0,0,0,.25); border: 1px solid var(--borda); font-size: 16px; outline: none; resize: vertical; }
+  .pp .linha2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+  .pp .linha2 .btn { font-size: 14px; padding: 12px 8px; }
+  .pp .estado-pp { font-size: 13px; color: var(--texto-2); margin-top: 8px; }
+  .pp .resp { display: flex; gap: 8px; align-items: flex-start; padding: 9px 0; border-top: 1px solid rgba(255,255,255,.1); font-size: 15px; }
+  .pp .resp .t { flex: 1; line-height: 1.35; }
+  .pp .resp .t b { display: block; font-size: 12px; color: var(--destaque); }
+  .pp .resp.oc .t { opacity: .4; text-decoration: line-through; }
+  .pp .resp button { border: 1px solid var(--borda); background: var(--cartao-forte); color: var(--texto); border-radius: 10px; padding: 6px 10px; font-size: 12px; font-weight: 700; white-space: nowrap; }
+  .pp .mais-resp { width: 100%; margin-top: 8px; background: none; border: 0; color: var(--destaque); font-weight: 700; }
   .links a { display: block; color: var(--destaque); margin: 6px 0; font-size: 14px; word-break: break-all; }
   .apres { background: var(--cartao); border: 1px solid var(--borda); border-radius: 16px; padding: 12px; margin-bottom: 12px; }
-  .modo-telao { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 4px; border-radius: 12px; background: rgba(0,0,0,.25); }
+  .modo-telao { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; padding: 4px; border-radius: 12px; background: rgba(0,0,0,.25); }
   .modo-telao button { border: 0; border-radius: 9px; padding: 10px 6px; background: transparent; color: var(--texto-2); font-weight: 700; font-size: 14px; }
   .modo-telao button.ativo { background: var(--texto); color: #061a63; }
   #apres-corpo { margin-top: 12px; display: grid; gap: 10px; }
@@ -101,6 +120,9 @@
       </div>
     </div>
 
+    <div class="palestras" id="palestras"></div>
+    <button class="btn por-telao oculto" id="por-telao">📺 Pôr esta palestra no telão</button>
+
     <div class="chaves">
       <div class="chave"><span>Aprovar antes de aparecer</span><button class="sw" id="sw-aprovar" aria-label="Aprovar antes de aparecer"></button></div>
       <div class="chave"><span>Receber perguntas</span><button class="sw" id="sw-aberto" aria-label="Receber perguntas"></button></div>
@@ -110,7 +132,8 @@
       <div class="apres-topo">
         <div class="modo-telao" role="tablist" aria-label="O que o telão mostra">
           <button data-modo="perguntas">💬 Perguntas</button>
-          <button data-modo="apresentacao">🎞️ Apresentação</button>
+          <button data-modo="apresentacao">🎞️ Slides</button>
+          <button data-modo="resposta">🗳️ Respostas</button>
         </div>
       </div>
       <div id="apres-corpo">
@@ -123,6 +146,17 @@
         <label class="subir"><input type="file" id="arquivo" accept="application/pdf,.pdf" hidden><span id="subir-txt">⬆️ Subir apresentação (PDF)</span></label>
         <p class="dica-pdf">PowerPoint, Keynote ou Canva: <b>Salvar/Baixar como PDF</b>. No computador da igreja, abra o telão e passe os slides pelo passador ou pelas setas.</p>
       </div>
+    </section>
+
+    <section class="pp" id="pp">
+      <h3>❓ Pergunta do pastor (todos respondem)</h3>
+      <textarea id="pp-texto" maxlength="200" placeholder="Escreva aqui a pergunta que o pastor vai fazer…"></textarea>
+      <div class="linha2">
+        <button class="btn" id="pp-abrir">▶ Abrir e mostrar</button>
+        <button class="btn sec" id="pp-fechar">⏹ Encerrar</button>
+      </div>
+      <div class="estado-pp" id="pp-estado">Fechada. Ninguém responde ainda.</div>
+      <div id="pp-lista"></div>
     </section>
 
     <div class="barra-destaque oculto" id="barra-destaque">
@@ -168,7 +202,9 @@
   const ler = (k) => { try { return localStorage.getItem(k) ?? sessionStorage.getItem(k); } catch { return null; } };
   const gravar = (k, v, longo) => { try { (longo ? localStorage : sessionStorage).setItem(k, v); } catch {} };
   const apagar = (k) => { try { localStorage.removeItem(k); sessionStorage.removeItem(k); } catch {} };
-  const CHAVE = `redeone.pin.${REDEONE.evento}`;
+  const CHAVE = REDEONE.chavePin;
+  // palestra que este controle mexe: a da URL, a última escolhida ou a que está no telão
+  if (!new URLSearchParams(location.search).get("evento")) REDEONE.evento = ler("redeone.controle.evento") || "ativo";
 
   let pin = ler(CHAVE);
   let dados = { evento: {}, perguntas: [] };
@@ -253,6 +289,8 @@
     document.querySelector('[data-aba="pendente"]').classList.toggle("alerta", cont.pendente > 0);
     document.title = cont.pendente ? `(${cont.pendente}) Rede One · Controle` : "Rede One · Controle";
     renderApres(ev);
+    renderPalestras();
+    renderPP(ev);
     const dq = ev.destaque_id && dados.perguntas.find((p) => p.id === ev.destaque_id);
     $("barra-destaque").classList.toggle("oculto", !dq);
     if (dq) $("bd-txt").textContent = dq.texto;
@@ -339,13 +377,13 @@
   $("sw-aprovar").onclick = () => config({ aprovar_antes: !dados.evento.aprovar_antes });
   $("sw-aberto").onclick = () => config({ aberto: !dados.evento.aberto });
 
-  const urlDe = (pag) => new URL(pag + (pag.includes("?") || REDEONE.evento === "rede-one-2026" ? "" : `?evento=${encodeURIComponent(REDEONE.evento)}`), location.href).href;
+  const urlDe = (pag) => new URL(pag, location.href).href;   // telão e QR seguem a palestra que está no telão
   $("abrir-telao").onclick = () => window.open(urlDe("telao.html"), "_blank");
   $("abrir-ajustes").onclick = () => {
     const ev = dados.evento;
     $("a-titulo").value = ev.titulo || ""; $("a-sub").value = ev.subtitulo || ""; $("a-banner").value = ev.banner_url || ""; $("a-pin").value = "";
     $("links").innerHTML = "";
-    for (const [r, pag] of [["Perguntar (QR Code)", "perguntar.html"], ["Telão", "telao.html"], ["Dinâmica do Pastor Paulo · controle", "dinamica-controle.html?evento=rede-one-paulo"]]) {
+    for (const [r, pag] of [["Perguntar (QR Code, segue a palestra no telão)", "perguntar.html"], ["Telão (segue a palestra no telão)", "telao.html"]]) {
       const a = document.createElement("a"); a.href = urlDe(pag); a.target = "_blank"; a.textContent = `${r}: ${urlDe(pag)}`; $("links").appendChild(a);
     }
     $("ajustes").showModal();
@@ -367,11 +405,77 @@
     const hora = (iso) => iso ? new Date(iso).toLocaleString("pt-BR") : "";
     const linhas = [["Enviada em", "Pergunta", "Nome", "Situação", "Respondida em"].map(esc).join(";")];
     dados.perguntas.slice().reverse().forEach((p) => linhas.push([hora(p.criada_em), p.texto, p.nome || "Anônimo", STATUS[p.status], hora(p.respondida_em)].map(esc).join(";")));
+    const resp = (dados.respostas || []).filter((r) => r.mesa === 0);
+    if (resp.length) {
+      linhas.push("", esc(`Respostas à pergunta do pastor: ${dados.evento.pergunta_pastor || ""}`), ["Enviada em", "Resposta", "Nome", "Oculta"].map(esc).join(";"));
+      resp.slice().reverse().forEach((r) => linhas.push([hora(r.criada_em), r.texto, r.nome || "Anônimo", r.oculta ? "sim" : ""].map(esc).join(";")));
+    }
     const blob = new Blob(["﻿" + linhas.join("\r\n")], { type: "text/csv;charset=utf-8" });
     const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
     a.download = `perguntas-${REDEONE.evento}-${new Date().toISOString().slice(0, 10)}.csv`; a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 1000);
   };
+
+  // ── Palestras: qual este controle mexe e qual está no telão ──
+  function renderPalestras() {
+    const box = $("palestras"); box.innerHTML = "";
+    for (const e of dados.eventos || []) {
+      const b = document.createElement("button");
+      b.className = e.id === dados.evento_id ? "sel" : "";
+      b.textContent = e.subtitulo.split("·").pop().trim();
+      const sm = document.createElement("small"); sm.textContent = e.subtitulo.split("·")[0].trim(); b.appendChild(sm);
+      if (e.id === dados.ativo) { const v = document.createElement("span"); v.className = "ao-vivo"; v.textContent = "NO TELÃO"; b.appendChild(v); }
+      b.onclick = () => {
+        if (e.id === dados.evento_id) return;
+        REDEONE.evento = e.id; gravar("redeone.controle.evento", e.id, true);
+        aba = "pendente"; previaDesenhada = null; ppEditando = false; vistos = null; atualizar();
+      };
+      box.appendChild(b);
+    }
+    $("por-telao").classList.toggle("oculto", !dados.evento_id || dados.evento_id === dados.ativo);
+  }
+  $("por-telao").onclick = async () => {
+    try { await chamar("ativar", { alvo: dados.evento_id }); toast("📺 Esta palestra está no telão agora"); }
+    catch (e) { if (e.message !== "pin") toast("Não deu certo. Confira a conexão."); }
+  };
+
+  // ── Pergunta do pastor ──
+  let ppEditando = false, ppTodas = false;
+  $("pp-texto").addEventListener("input", () => { ppEditando = true; });
+  function renderPP(ev) {
+    if (!ppEditando) $("pp-texto").value = ev.pergunta_pastor || "";
+    const resp = (dados.respostas || []).filter((r) => r.mesa === 0);
+    const vis = resp.filter((r) => !r.oculta).length;
+    const plural = `${vis} resposta${vis === 1 ? "" : "s"}`;
+    $("pp-estado").textContent = ev.pastor_aberta
+      ? `🟢 Aberta · ${plural}${ev.telao_modo === "resposta" ? " · no telão" : ""}`
+      : resp.length ? `⏹ Encerrada · ${plural}` : "Fechada. Ninguém responde ainda.";
+    $("pp-abrir").textContent = ev.pastor_aberta ? "💾 Salvar e mostrar" : "▶ Abrir e mostrar";
+    $("pp-fechar").disabled = !ev.pastor_aberta;
+    const box = $("pp-lista"); box.innerHTML = "";
+    for (const r of resp.slice(0, ppTodas ? 300 : 6)) {
+      const d = document.createElement("div"); d.className = "resp" + (r.oculta ? " oc" : "");
+      const t = document.createElement("div"); t.className = "t";
+      const n = document.createElement("b"); n.textContent = r.nome || "Anônimo"; t.appendChild(n); t.appendChild(document.createTextNode(r.texto));
+      const b = document.createElement("button"); b.textContent = r.oculta ? "Mostrar" : "🙈 Ocultar";
+      b.onclick = () => chamar("agir", { id: r.id, acao: r.oculta ? "mostrar_resposta" : "ocultar_resposta" }).catch(() => {});
+      d.appendChild(t); d.appendChild(b); box.appendChild(d);
+    }
+    if (resp.length > 6) {
+      const m = document.createElement("button"); m.className = "mais-resp";
+      m.textContent = ppTodas ? "Mostrar menos" : `Ver todas (${resp.length})`;
+      m.onclick = () => { ppTodas = !ppTodas; render(); };
+      box.appendChild(m);
+    }
+  }
+  $("pp-abrir").onclick = async () => {
+    const txt = $("pp-texto").value.trim();
+    if (txt.length < 3) { toast("Escreva a pergunta do pastor primeiro."); $("pp-texto").focus(); return; }
+    ppEditando = false;
+    await config({ pergunta_pastor: txt, pastor_aberta: true, telao_modo: "resposta" });
+    toast("❓ Pergunta aberta e no telão");
+  };
+  $("pp-fechar").onclick = async () => { await config({ pastor_aberta: false }); toast("Respostas encerradas (o mural continua no telão)"); };
 
   // ── Apresentação: modo do telão, slides, prévia e upload do PDF ──
   if (window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";

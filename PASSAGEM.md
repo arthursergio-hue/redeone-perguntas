@@ -40,6 +40,13 @@ Limite de 1 pergunta / 30 s por aparelho, filtro de palavrão, tempo real, celul
   (evento `rede-one-paulo` com o mesmo PIN, bucket `redeone`). Painel de prints: `provas/00-painel-entrega.png`.
 - As 4 perguntas das mesas estão como "Pergunta da mesa N (o Pastor Paulo define)": trocar no controle da dinâmica.
 
+## Situação em 16/11/2026 (3ª etapa)
+- O Pastor Paulo vai usar papel branco na dinâmica (faz parte da metodologia). A palestra dele ficou igual à do
+  Pastor Pedro (perguntas) + a **pergunta do pastor**: todos respondem pelo celular, anônimo ou com nome, e as
+  respostas vão para o mural do telão. A dinâmica das mesas ficou guardada, sem uso.
+- Novo: "palestra no telão" (um QR e um telão para a conferência; o Arthur troca no controle), PIN único.
+- Migração 003 aplicada no Supabase. Edge Function e site ainda **não publicados** (Arthur disse "ainda não").
+
 ## Falta do Arthur
 Nome do endereço (sugestão `redeone-perguntas`), arquivo das apresentações, as 4 perguntas do Pastor Paulo.
 

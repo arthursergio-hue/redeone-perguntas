@@ -15,12 +15,14 @@ const PIN = process.env.REDEONE_PIN || "1234";
 
 const base = { aprovar_antes: true, aberto: true, banner_url: null, telao_modo: "perguntas", slides_url: null,
   slides_total: null, slide_atual: 1, mostrar_perguntas_slides: true, destaque_id: null, rodada: 0, rodada_fim: null,
-  rodada_pausa_s: null, duracao_s: 120, foco_mesa: null, grupos: 4 };
+  rodada_pausa_s: null, duracao_s: 120, foco_mesa: null, grupos: 4, pergunta_pastor: "", pastor_aberta: false };
 const eventos = new Map([
   ["rede-one-2026", { ...base, titulo: "Rede One", subtitulo: "Filhos: a fé começa em casa · Pastor Pedro", modo: "perguntas" }],
-  ["rede-one-paulo", { ...base, titulo: "Rede One", subtitulo: "Chamados para servir · Pastor Paulo", modo: "dinamica", aprovar_antes: false }],
+  ["rede-one-paulo", { ...base, titulo: "Rede One", subtitulo: "Chamados para servir · Pastor Paulo", modo: "perguntas" }],
 ]);
 const mesas = new Map([["rede-one-paulo", [1, 2, 3, 4].map((n) => ({ numero: n, pergunta: `Pergunta da mesa ${n} (o Pastor Paulo define)`, texto_ensina: "" }))]]);
+let ativo = "rede-one-2026";            // palestra que está no telão
+const resolver = (id) => (id === "ativo" ? ativo : id);
 const perguntas = [];
 const respostas = [];
 const agora = () => new Date().toISOString();
@@ -53,16 +55,19 @@ function telao(id) {
     .sort((a, b) => (b.fixada - a.fixada) || ((b.aprovada_em || b.criada_em) > (a.aprovada_em || a.criada_em) ? 1 : -1))
     .slice(0, 12).map((p) => ({ id: p.id, texto: p.texto, nome: p.nome, fixada: p.fixada, quando: p.aprovada_em || p.criada_em }));
   const d = perguntas.find((p) => p.id === ev.destaque_id && p.evento_id === id && ["aprovada", "pendente"].includes(p.status));
-  const out = { evento: evPublico(ev), destaque: d ? { id: d.id, texto: d.texto, nome: d.nome } : null, perguntas: q };
+  const rp = respostas.filter((r) => r.evento_id === id && r.mesa === 0 && !r.oculta);
+  const out = { evento_id: id, evento: evPublico(ev), destaque: d ? { id: d.id, texto: d.texto, nome: d.nome } : null, perguntas: q,
+    respostas_pastor: rp.slice(-60).reverse().map(({ id, texto, nome }) => ({ id, texto, nome })), total_respostas_pastor: rp.length };
   if (ev.modo === "dinamica") {
     out.mesas = (mesas.get(id) || []).map((m) => ({ ...m, texto_ensina: ev.rodada >= 5 ? m.texto_ensina : "" }));
-    out.respostas = respostas.filter((r) => r.evento_id === id && !r.oculta).map(({ id, mesa, grupo, rodada, texto }) => ({ id, mesa, grupo, rodada, texto }));
+    out.respostas = respostas.filter((r) => r.evento_id === id && r.mesa > 0 && !r.oculta).map(({ id, mesa, grupo, rodada, texto }) => ({ id, mesa, grupo, rodada, texto }));
   }
   return out;
 }
 function listar(id) {
   const ev = eventos.get(id);
   return {
+    evento_id: id, ativo, eventos: [...eventos].map(([k, v]) => ({ id: k, subtitulo: v.subtitulo })),
     evento: { ...evPublico(ev), aprovar_antes: ev.aprovar_antes, destaque_id: ev.destaque_id },
     perguntas: perguntas.filter((p) => p.evento_id === id).slice().reverse().map(({ dispositivo, ...p }) => p),
     mesas: mesas.get(id) || [],
@@ -115,6 +120,21 @@ function responder(id, b) {
   return { ok: true, mesa: m };
 }
 
+function responderPastor(id, b) {
+  const ev = eventos.get(id); if (!ev) return { ok: false, erro: "evento" };
+  if (!ev.pastor_aberta || !ev.pergunta_pastor) return { ok: false, erro: "pastor_fechada" };
+  const txt = limpar(b.texto); let nm = limpar(b.nome) || null;
+  if (txt.length < 2) return { ok: false, erro: "curta" };
+  if (txt.length > 280) return { ok: false, erro: "longa" };
+  if (nm) nm = nm.slice(0, 60);
+  if (!/^[A-Za-z0-9-]{8,64}$/.test(b.dispositivo || "")) return { ok: false, erro: "dispositivo" };
+  if (temPalavrao(txt) || temPalavrao(nm)) return { ok: false, erro: "palavrao" };
+  const ultima = respostas.filter((r) => r.dispositivo === b.dispositivo && r.evento_id === id && r.mesa === 0).at(-1);
+  if (ultima) { const falta = 10 - (Date.now() - Date.parse(ultima.criada_em)) / 1000; if (falta > 0) return { ok: false, erro: "espera", espera_s: Math.ceil(falta) }; }
+  respostas.push({ id: randomUUID(), evento_id: id, mesa: 0, grupo: 0, rodada: 0, texto: txt, nome: nm, dispositivo: b.dispositivo, oculta: false, criada_em: agora() });
+  return { ok: true };
+}
+
 function agir(id, pid, acao) {
   const ev = eventos.get(id);
   if (acao === "tirar_destaque") { ev.destaque_id = null; return; }
@@ -151,17 +171,19 @@ function rodada(id, acao) {
 
 let pinAtual = PIN;
 function api(b, origem) {
-  const id = String(b.evento || "");
+  const id = resolver(String(b.evento || ""));
   const ev = eventos.get(id);
   switch (b.op) {
     case "enviar": return [200, enviar(id, b)];
+    case "responder_pastor": return [200, responderPastor(id, b)];
     case "responder": return [200, responder(id, b)];
     case "telao": { const t = telao(id); return t ? [200, { ok: true, ...t }] : [404, { ok: false, erro: "evento" }]; }
-    case "entrar": case "listar": case "agir": case "config": case "slide": case "rodada": case "mesas": case "upload_url": {
+    case "entrar": case "listar": case "agir": case "config": case "slide": case "rodada": case "mesas": case "upload_url": case "ativar": {
       if (!ev) return [404, { ok: false, erro: "evento" }];
       if (String(b.pin || "") !== pinAtual) return [401, { ok: false, erro: "pin" }];
       if (b.op === "agir") agir(id, b.id, b.acao);
       if (b.op === "rodada") rodada(id, b.acao);
+      if (b.op === "ativar" && eventos.has(b.alvo)) ativo = b.alvo;
       if (b.op === "slide") {
         const alvo = Number.isFinite(b.ir) ? b.ir : ev.slide_atual + (Number.isFinite(b.delta) ? b.delta : 0);
         ev.slide_atual = Math.min(Math.max(alvo, 1), Math.max(ev.slides_total || 1, 1));
@@ -181,11 +203,12 @@ function api(b, origem) {
       }
       if (b.op === "config") {
         const c = b.cfg || {};
-        for (const k of ["aprovar_antes", "aberto", "mostrar_perguntas_slides"]) if (typeof c[k] === "boolean") ev[k] = c[k];
+        for (const k of ["aprovar_antes", "aberto", "mostrar_perguntas_slides", "pastor_aberta"]) if (typeof c[k] === "boolean") ev[k] = c[k];
+        if ("pergunta_pastor" in c) ev.pergunta_pastor = limpar(c.pergunta_pastor).slice(0, 200);
         if (c.titulo) ev.titulo = c.titulo.slice(0, 80);
         if (c.subtitulo) ev.subtitulo = c.subtitulo.slice(0, 120);
         if ("banner_url" in c) ev.banner_url = c.banner_url || null;
-        if (["perguntas", "apresentacao"].includes(c.telao_modo)) ev.telao_modo = c.telao_modo;
+        if (["perguntas", "apresentacao", "resposta"].includes(c.telao_modo)) ev.telao_modo = c.telao_modo;
         if ("slides_url" in c) { ev.slides_url = c.slides_url || null; ev.slides_total = c.slides_total || null; ev.slide_atual = 1; }
         if (Number.isFinite(c.duracao_s)) ev.duracao_s = Math.min(Math.max(c.duracao_s, 30), 1800);
         if ("foco_mesa" in c) ev.foco_mesa = c.foco_mesa;

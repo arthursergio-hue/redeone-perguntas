@@ -74,6 +74,24 @@
   #lado-lista { display: flex; flex-direction: column; gap: 1.2vh; }
   .num-slide { position: absolute; left: 1.4vw; bottom: 1.6vh; z-index: 2; font-size: 13px; color: rgba(255,255,255,.5); font-weight: 600; }
 
+  /* ── Mural: respostas à pergunta do pastor ── */
+  #mural { position: fixed; inset: 0; z-index: 4; display: none; grid-template-columns: 1fr minmax(240px, 20vw); gap: 2.6vw; padding: 4vh 3vw; }
+  body.mural #mural { display: grid; }
+  body.mural .palco { display: none; }
+  .m-esq { display: flex; flex-direction: column; min-height: 0; }
+  .m-perg { border-radius: 2.4vh; padding: 2.6vh 2vw; margin-bottom: 2.6vh; background: linear-gradient(135deg, rgba(245,200,66,.24), rgba(245,200,66,.08)); border: 2px solid rgba(245,200,66,.85); }
+  .m-perg .rot { font-size: clamp(12px, 1.05vw, 22px); font-weight: 900; letter-spacing: .1em; text-transform: uppercase; color: var(--destaque); }
+  .m-perg .txt { font-size: clamp(24px, 3.1vw, 66px); font-weight: 800; line-height: 1.15; margin-top: 1vh; }
+  .parede { position: relative; flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(3, 1fr); grid-auto-rows: min-content; gap: 1.6vh 1.2vw; overflow: hidden; align-content: start; }
+  .rc { background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.2); border-radius: 1.8vh; padding: 1.8vh 1.2vw; animation: entra .6s cubic-bezier(.2,.9,.25,1.1) both; }
+  .rc .txt { font-size: clamp(14px, 1.35vw, 30px); font-weight: 600; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+  .rc .quem { margin-top: .8vh; font-size: clamp(11px, .95vw, 20px); color: var(--destaque); font-weight: 700; }
+  .m-dir { display: flex; flex-direction: column; justify-content: flex-end; gap: 2vh; }
+  .m-conta { text-align: center; }
+  .m-conta b { display: block; font-size: clamp(40px, 5vw, 110px); line-height: 1; color: var(--destaque); }
+  .m-conta span { font-size: clamp(13px, 1.2vw, 26px); color: var(--texto-2); font-weight: 600; }
+  .m-vazio { grid-column: 1 / -1; font-size: clamp(18px, 2vw, 42px); color: var(--texto-2); margin-top: 4vh; }
+
   /* ── Pergunta destacada (tela inteira, fundo desfocado) ── */
   #destaque { position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; padding: 6vh 7vw;
     background: rgba(4, 16, 64, .55); backdrop-filter: blur(18px) saturate(1.1); -webkit-backdrop-filter: blur(18px);
@@ -129,6 +147,17 @@
   <div class="num-slide" id="num-slide"></div>
 </section>
 
+<section id="mural" aria-label="Respostas à pergunta do pastor">
+  <div class="m-esq">
+    <div class="m-perg"><div class="rot" id="m-rot">💬 Pergunta do pastor</div><div class="txt" id="m-perg"></div></div>
+    <div class="parede" id="parede"></div>
+  </div>
+  <aside class="m-dir">
+    <div class="m-conta"><b id="m-n">0</b><span>respostas</span></div>
+    <div class="qr-card"><div class="chamada">📱 Responda pelo celular</div><div class="qr" id="qr3"></div><div class="url" id="url3"></div></div>
+  </aside>
+</section>
+
 <div id="destaque" aria-live="polite">
   <div class="caixa"><div class="selo">💬 Pergunta</div><div class="txt" id="d-txt"></div><div class="quem" id="d-quem"></div></div>
 </div>
@@ -153,12 +182,12 @@
   if (window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
 
   // QR Code para a tela Perguntar (?link= troca o endereço, útil no teste local)
-  const destino = params.get("link") || new URL("perguntar.html" + (REDEONE.evento !== "rede-one-2026" ? `?evento=${encodeURIComponent(REDEONE.evento)}` : ""), location.href).href;
-  for (const alvo of ["qr", "qr2"]) {
+  const destino = params.get("link") || new URL("perguntar.html" + (REDEONE.evento !== "ativo" ? `?evento=${encodeURIComponent(REDEONE.evento)}` : ""), location.href).href;
+  for (const alvo of ["qr", "qr2", "qr3"]) {
     try { const q = qrcode(0, "M"); q.addData(destino); q.make(); $(alvo).innerHTML = q.createSvgTag({ cellSize: 8, margin: 0, scalable: true }); }
     catch { $(alvo).textContent = "QR indisponível"; }
   }
-  $("url").textContent = destino.replace(/^https?:\/\//, "");
+  $("url").textContent = $("url3").textContent = destino.replace(/^https?:\/\//, "");
 
   // ── Lista de perguntas (modo perguntas) ──
   let atual = new Map();
@@ -257,6 +286,38 @@
     })().finally(() => { desenhando = null; if (pedida !== paginaDesenhada) desenhar(pedida); });
   }
 
+  // ── Mural de respostas (só redesenha o que é novo; o que não cabe some primeiro, o mais antigo) ──
+  const noMural = new Map();
+  function renderMural(r) {
+    const ev = r.evento;
+    $("m-rot").textContent = `💬 Pergunta do ${ev.subtitulo.split("·").pop().trim() || "pastor"}`;
+    $("m-perg").textContent = ev.pergunta_pastor || "…";
+    $("m-n").textContent = r.total_respostas_pastor ?? r.respostas_pastor.length;
+    const parede = $("parede");
+    const ids = new Set(r.respostas_pastor.map((x) => x.id));
+    for (const [id, el] of noMural) if (!ids.has(id)) { el.remove(); noMural.delete(id); }
+    parede.querySelector(".m-vazio")?.remove();
+    r.respostas_pastor.forEach((x, i) => {                       // mais nova primeiro
+      let el = noMural.get(x.id);
+      if (!el) {
+        el = document.createElement("article"); el.className = "rc";
+        const t = document.createElement("div"); t.className = "txt"; t.textContent = x.texto; el.appendChild(t);
+        const q = document.createElement("div"); q.className = "quem"; q.textContent = x.nome || "Anônimo"; el.appendChild(q);
+        noMural.set(x.id, el);
+      }
+      if (parede.children[i] !== el) parede.insertBefore(el, parede.children[i] || null);
+    });
+    if (!r.respostas_pastor.length) {
+      const v = document.createElement("div"); v.className = "m-vazio";
+      v.textContent = ev.pastor_aberta ? "Leia o QR Code e mande a sua resposta. Pode ser anônima. 👉" : "As respostas aparecem aqui quando o pastor abrir a pergunta.";
+      parede.appendChild(v); return;
+    }
+    const cards = [...parede.children];
+    cards.forEach((c) => c.classList.remove("oculto"));
+    const passou = (c) => c.offsetTop + c.offsetHeight > parede.clientHeight + 1;
+    for (let i = cards.length - 1; i > 0 && passou(cards[i]); i--) cards[i].classList.add("oculto");
+  }
+
   // ── Destaque ──
   let destaqueId = null;
   function renderDestaque(d) {
@@ -282,10 +343,14 @@
         $("banner").classList.toggle("padrao", !banner);
         $("banner").style.backgroundImage = banner ? `url("${banner.replace(/"/g, "")}")` : "";
       }
-      const apresentando = r.evento.telao_modo === "apresentacao" && !!r.evento.slides_url && !!window.pdfjsLib;
+      const mural = r.evento.telao_modo === "resposta";
+      const apresentando = !mural && r.evento.telao_modo === "apresentacao" && !!r.evento.slides_url && !!window.pdfjsLib;
       document.body.classList.toggle("apresentando", apresentando);
+      document.body.classList.toggle("mural", mural);
       renderDestaque(r.destaque);
-      if (apresentando) {
+      if (mural) {
+        renderMural(r);
+      } else if (apresentando) {
         renderLado(r.perguntas, r.evento.mostrar_perguntas_slides);
         await carregarPdf(r.evento.slides_url);
         desenhar(r.evento.slide_atual);
@@ -297,7 +362,7 @@
   window.addEventListener("resize", () => { if (document.body.classList.contains("apresentando")) desenhar(paginaDesenhada || 1, true); else atualizar(); });
 
   // ── Passar slide pelo teclado/passador no computador da igreja (pede o PIN uma vez) ──
-  const CHAVE = `redeone.pin.${REDEONE.evento}`;
+  const CHAVE = REDEONE.chavePin;
   const lerPin = () => { try { return localStorage.getItem(CHAVE); } catch { return null; } };
   function pedirPin() {
     return new Promise((ok) => {
