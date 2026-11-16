@@ -1,0 +1,16 @@
+/* Cores dos grupos da dinâmica (as mesmas no celular, no telão e no controle) */
+:root {
+  --g1: #4aa8ff;
+  --g2: #f5c842;
+  --g3: #2fd38a;
+  --g4: #ff8a6b;
+  --g5: #c39bff;
+  --g6: #ff6fae;
+}
+.g1 { --g: var(--g1); } .g2 { --g: var(--g2); } .g3 { --g: var(--g3); }
+.g4 { --g: var(--g4); } .g5 { --g: var(--g5); } .g6 { --g: var(--g6); }
+.chip-grupo { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 99px; font-weight: 800; color: #061a63; background: var(--g); }
+.relogio { font-variant-numeric: tabular-nums; font-weight: 900; letter-spacing: .02em; }
+.relogio.acabando { color: var(--destaque); }
+.relogio.zerou { color: #ff6b81; animation: pulsa 1s ease-in-out infinite; }
+@keyframes pulsa { 50% { opacity: .45; } }

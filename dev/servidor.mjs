@@ -1,20 +1,28 @@
 // Servidor de TESTE local: serve a pasta web/ e imita a Edge Function "redeone" em memória,
-// com as mesmas regras do SQL (aprovação, 30 s por aparelho, palavrão, repetida, PIN).
+// com as mesmas regras do SQL (aprovação, 30 s por aparelho, palavrão, repetida, PIN, slides, dinâmica).
 // Uso: node dev/servidor.mjs   →  http://localhost:5174   (PIN local: REDEONE_PIN ou 1234)
 import { createServer } from "node:http";
-import { readFile } from "node:fs/promises";
+import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { extname, join, normalize } from "node:path";
 import { randomUUID } from "node:crypto";
 import { fileURLToPath } from "node:url";
 
 const PORTA = Number(process.env.PORT || 5174);
-const RAIZ = join(fileURLToPath(new URL(".", import.meta.url)), "..", "web");
+const AQUI = fileURLToPath(new URL(".", import.meta.url));
+const RAIZ = join(AQUI, "..", "web");
+const UPLOADS = join(AQUI, "uploads");
 const PIN = process.env.REDEONE_PIN || "1234";
 
-const eventos = new Map([["rede-one-2026", {
-  titulo: "Rede One", subtitulo: "Filhos: a fé começa em casa · Pastor Pedro", aprovar_antes: true, aberto: true, banner_url: null,
-}]]);
+const base = { aprovar_antes: true, aberto: true, banner_url: null, telao_modo: "perguntas", slides_url: null,
+  slides_total: null, slide_atual: 1, mostrar_perguntas_slides: true, destaque_id: null, rodada: 0, rodada_fim: null,
+  rodada_pausa_s: null, duracao_s: 120, foco_mesa: null, grupos: 4 };
+const eventos = new Map([
+  ["rede-one-2026", { ...base, titulo: "Rede One", subtitulo: "Filhos: a fé começa em casa · Pastor Pedro", modo: "perguntas" }],
+  ["rede-one-paulo", { ...base, titulo: "Rede One", subtitulo: "Chamados para servir · Pastor Paulo", modo: "dinamica", aprovar_antes: false }],
+]);
+const mesas = new Map([["rede-one-paulo", [1, 2, 3, 4].map((n) => ({ numero: n, pergunta: `Pergunta da mesa ${n} (o Pastor Paulo define)`, texto_ensina: "" }))]]);
 const perguntas = [];
+const respostas = [];
 const agora = () => new Date().toISOString();
 
 const PALAVROES = ("porra|caralho|caralhos|krl|crl|merda|merdas|bosta|bostas|foda|fodase|foda-se|fuder|foder|fodido|fodida|" +
@@ -29,18 +37,37 @@ const normalizar = (t) => [...(t || "").toLowerCase()].map((c) => { const i = DE
   .join("").replace(/(.)\1{2,}/g, "$1");
 const temPalavrao = (t) => RE_PALAVRAO.test(normalizar(t));
 const limpar = (t) => String(t ?? "").replace(/\s+/g, " ").trim();
+const mesaDoGrupo = (g, r, n) => ((g - 1 + r - 1) % n) + 1;
+const restante = (ev) => ev.rodada_pausa_s != null ? ev.rodada_pausa_s
+  : ev.rodada_fim == null ? null : Math.max(0, Math.ceil((Date.parse(ev.rodada_fim) - Date.now()) / 1000));
+const emSeg = (s) => new Date(Date.now() + s * 1000).toISOString();
+
+function evPublico(ev) {
+  const { aprovar_antes, destaque_id, rodada_fim, rodada_pausa_s, ...resto } = ev;
+  return { ...resto, restante_s: restante(ev), pausada: ev.rodada_pausa_s != null };
+}
 
 function telao(id) {
   const ev = eventos.get(id); if (!ev) return null;
   const q = perguntas.filter((p) => p.evento_id === id && p.status === "aprovada")
     .sort((a, b) => (b.fixada - a.fixada) || ((b.aprovada_em || b.criada_em) > (a.aprovada_em || a.criada_em) ? 1 : -1))
     .slice(0, 12).map((p) => ({ id: p.id, texto: p.texto, nome: p.nome, fixada: p.fixada, quando: p.aprovada_em || p.criada_em }));
-  return { evento: { titulo: ev.titulo, subtitulo: ev.subtitulo, banner_url: ev.banner_url, aberto: ev.aberto }, perguntas: q };
+  const d = perguntas.find((p) => p.id === ev.destaque_id && p.evento_id === id && ["aprovada", "pendente"].includes(p.status));
+  const out = { evento: evPublico(ev), destaque: d ? { id: d.id, texto: d.texto, nome: d.nome } : null, perguntas: q };
+  if (ev.modo === "dinamica") {
+    out.mesas = (mesas.get(id) || []).map((m) => ({ ...m, texto_ensina: ev.rodada >= 5 ? m.texto_ensina : "" }));
+    out.respostas = respostas.filter((r) => r.evento_id === id && !r.oculta).map(({ id, mesa, grupo, rodada, texto }) => ({ id, mesa, grupo, rodada, texto }));
+  }
+  return out;
 }
 function listar(id) {
   const ev = eventos.get(id);
-  return { evento: { ...ev }, perguntas: perguntas.filter((p) => p.evento_id === id).slice().reverse()
-    .map(({ dispositivo, ...p }) => p) };
+  return {
+    evento: { ...evPublico(ev), aprovar_antes: ev.aprovar_antes, destaque_id: ev.destaque_id },
+    perguntas: perguntas.filter((p) => p.evento_id === id).slice().reverse().map(({ dispositivo, ...p }) => p),
+    mesas: mesas.get(id) || [],
+    respostas: respostas.filter((r) => r.evento_id === id).slice().reverse().map(({ dispositivo, ...r }) => r),
+  };
 }
 
 function enviar(id, b) {
@@ -65,31 +92,103 @@ function enviar(id, b) {
   return { ok: true, id: p.id, status: p.status };
 }
 
+function responder(id, b) {
+  const ev = eventos.get(id);
+  if (!ev || ev.modo !== "dinamica") return { ok: false, erro: "evento" };
+  if (!ev.aberto) return { ok: false, erro: "fechado" };
+  if (ev.rodada < 1 || ev.rodada > ev.grupos) return { ok: false, erro: "fora_rodada" };
+  if (ev.rodada_pausa_s == null && ev.rodada_fim && Date.now() > Date.parse(ev.rodada_fim) + 15000) return { ok: false, erro: "tempo" };
+  const g = Number(b.grupo);
+  if (!(g >= 1 && g <= ev.grupos)) return { ok: false, erro: "grupo" };
+  const txt = limpar(b.texto);
+  if (txt.length < 2) return { ok: false, erro: "curta" };
+  if (txt.length > 200) return { ok: false, erro: "longa" };
+  if (!/^[A-Za-z0-9-]{8,64}$/.test(b.dispositivo || "")) return { ok: false, erro: "dispositivo" };
+  if (temPalavrao(txt)) return { ok: false, erro: "palavrao" };
+  const ultima = respostas.filter((r) => r.dispositivo === b.dispositivo && r.evento_id === id).at(-1);
+  if (ultima) {
+    const falta = 8 - (Date.now() - Date.parse(ultima.criada_em)) / 1000;
+    if (falta > 0) return { ok: false, erro: "espera", espera_s: Math.ceil(falta) };
+  }
+  const m = mesaDoGrupo(g, ev.rodada, ev.grupos);
+  respostas.push({ id: randomUUID(), evento_id: id, mesa: m, grupo: g, rodada: ev.rodada, texto: txt, dispositivo: b.dispositivo, oculta: false, criada_em: agora() });
+  return { ok: true, mesa: m };
+}
+
 function agir(id, pid, acao) {
+  const ev = eventos.get(id);
+  if (acao === "tirar_destaque") { ev.destaque_id = null; return; }
+  if (acao === "ocultar_resposta" || acao === "mostrar_resposta") {
+    const r = respostas.find((x) => x.id === pid && x.evento_id === id); if (r) r.oculta = acao === "ocultar_resposta"; return;
+  }
   const p = perguntas.find((x) => x.id === pid && x.evento_id === id); if (!p) return;
+  const tiraDestaque = () => { if (ev.destaque_id === pid) ev.destaque_id = null; };
   if (acao === "fixar") { perguntas.forEach((x) => { if (x.evento_id === id && x.id !== pid) x.fixada = false; }); p.fixada = true; p.status = "aprovada"; p.aprovada_em ||= agora(); }
   else if (acao === "desafixar") p.fixada = false;
   else if (acao === "aprovar") { p.status = "aprovada"; p.aprovada_em = agora(); }
-  else if (acao === "responder") { p.status = "respondida"; p.fixada = false; p.respondida_em = agora(); }
-  else if (acao === "ocultar") { p.status = "oculta"; p.fixada = false; }
-  else if (acao === "pendente") { p.status = "pendente"; p.fixada = false; }
+  else if (acao === "responder") { p.status = "respondida"; p.fixada = false; p.respondida_em = agora(); tiraDestaque(); }
+  else if (acao === "ocultar") { p.status = "oculta"; p.fixada = false; tiraDestaque(); }
+  else if (acao === "pendente") { p.status = "pendente"; p.fixada = false; tiraDestaque(); }
+  else if (acao === "destacar") { p.status = "aprovada"; p.aprovada_em ||= agora(); ev.destaque_id = pid; }
+}
+
+function rodada(id, acao) {
+  const ev = eventos.get(id);
+  if (acao === "iniciar") Object.assign(ev, { rodada: 1, rodada_fim: emSeg(ev.duracao_s), rodada_pausa_s: null, foco_mesa: null });
+  else if (acao === "proxima") {
+    if (ev.rodada >= ev.grupos) Object.assign(ev, { rodada: ev.grupos + 1, rodada_fim: null, rodada_pausa_s: null, foco_mesa: 1 });
+    else Object.assign(ev, { rodada: ev.rodada + 1, rodada_fim: emSeg(ev.duracao_s), rodada_pausa_s: null });
+  } else if (acao === "anterior") {
+    const r = Math.max(ev.rodada - 1, 0);
+    Object.assign(ev, { rodada: r, rodada_fim: r >= 1 && r <= ev.grupos ? emSeg(ev.duracao_s) : null, rodada_pausa_s: null, foco_mesa: null });
+  } else if (acao === "mais30") {
+    if (ev.rodada_pausa_s != null) ev.rodada_pausa_s += 30;
+    else ev.rodada_fim = new Date(Math.max(Date.parse(ev.rodada_fim || agora()), Date.now()) + 30000).toISOString();
+  } else if (acao === "pausar") { if (ev.rodada_pausa_s == null) Object.assign(ev, { rodada_pausa_s: restante(ev), rodada_fim: null }); }
+  else if (acao === "retomar") Object.assign(ev, { rodada_fim: emSeg(ev.rodada_pausa_s || 0), rodada_pausa_s: null });
+  else if (acao === "zerar") Object.assign(ev, { rodada: 0, rodada_fim: null, rodada_pausa_s: null, foco_mesa: null });
 }
 
 let pinAtual = PIN;
-function api(b) {
+function api(b, origem) {
   const id = String(b.evento || "");
+  const ev = eventos.get(id);
   switch (b.op) {
     case "enviar": return [200, enviar(id, b)];
+    case "responder": return [200, responder(id, b)];
     case "telao": { const t = telao(id); return t ? [200, { ok: true, ...t }] : [404, { ok: false, erro: "evento" }]; }
-    case "entrar": case "listar": case "agir": case "config": {
+    case "entrar": case "listar": case "agir": case "config": case "slide": case "rodada": case "mesas": case "upload_url": {
+      if (!ev) return [404, { ok: false, erro: "evento" }];
       if (String(b.pin || "") !== pinAtual) return [401, { ok: false, erro: "pin" }];
       if (b.op === "agir") agir(id, b.id, b.acao);
+      if (b.op === "rodada") rodada(id, b.acao);
+      if (b.op === "slide") {
+        const alvo = Number.isFinite(b.ir) ? b.ir : ev.slide_atual + (Number.isFinite(b.delta) ? b.delta : 0);
+        ev.slide_atual = Math.min(Math.max(alvo, 1), Math.max(ev.slides_total || 1, 1));
+      }
+      if (b.op === "mesas" && Array.isArray(b.mesas)) {
+        const lista = mesas.get(id) || [];
+        for (const m of b.mesas) {
+          const alvo = lista.find((x) => x.numero === Number(m.numero));
+          const novo = { numero: Number(m.numero), pergunta: String(m.pergunta || "").slice(0, 200), texto_ensina: String(m.texto_ensina || "").slice(0, 1000) };
+          if (alvo) Object.assign(alvo, novo); else lista.push(novo);
+        }
+        mesas.set(id, lista.sort((a, c) => a.numero - c.numero));
+      }
+      if (b.op === "upload_url") {
+        const nome = `${id}-${Date.now()}.pdf`;
+        return [200, { ok: true, local: true, caminho: nome, envio: `/upload/${nome}`, publico: `${origem}/uploads/${nome}` }];
+      }
       if (b.op === "config") {
-        const ev = eventos.get(id), c = b.cfg || {};
-        for (const k of ["aprovar_antes", "aberto"]) if (typeof c[k] === "boolean") ev[k] = c[k];
+        const c = b.cfg || {};
+        for (const k of ["aprovar_antes", "aberto", "mostrar_perguntas_slides"]) if (typeof c[k] === "boolean") ev[k] = c[k];
         if (c.titulo) ev.titulo = c.titulo.slice(0, 80);
         if (c.subtitulo) ev.subtitulo = c.subtitulo.slice(0, 120);
         if ("banner_url" in c) ev.banner_url = c.banner_url || null;
+        if (["perguntas", "apresentacao"].includes(c.telao_modo)) ev.telao_modo = c.telao_modo;
+        if ("slides_url" in c) { ev.slides_url = c.slides_url || null; ev.slides_total = c.slides_total || null; ev.slide_atual = 1; }
+        if (Number.isFinite(c.duracao_s)) ev.duracao_s = Math.min(Math.max(c.duracao_s, 30), 1800);
+        if ("foco_mesa" in c) ev.foco_mesa = c.foco_mesa;
         if (c.novo_pin && /^\d{4,12}$/.test(c.novo_pin)) pinAtual = c.novo_pin;
       }
       return [200, { ok: true, ...listar(id) }];
@@ -99,21 +198,28 @@ function api(b) {
 }
 
 const TIPOS = { ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8",
-  ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".svg": "image/svg+xml", ".webp": "image/webp" };
+  ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".svg": "image/svg+xml", ".webp": "image/webp", ".pdf": "application/pdf" };
 
 createServer(async (req, res) => {
   const url = new URL(req.url, "http://x");
+  const corpo = async () => { const p = []; for await (const c of req) p.push(c); return Buffer.concat(p); };
   if (url.pathname === "/api" && req.method === "POST") {
-    const partes = []; for await (const c of req) partes.push(c);
-    let b; try { b = JSON.parse(Buffer.concat(partes).toString("utf8")); } catch { b = {}; }
-    const [st, j] = api(b);
+    let b; try { b = JSON.parse((await corpo()).toString("utf8")); } catch { b = {}; }
+    const [st, j] = api(b, `http://${req.headers.host}`);
     res.writeHead(st, { "Content-Type": "application/json" }); return res.end(JSON.stringify(j));
   }
-  let caminho = normalize(decodeURIComponent(url.pathname)).replace(/^[\\/]+/, "");
+  if (url.pathname.startsWith("/upload/") && req.method === "PUT") {
+    const nome = url.pathname.slice(8).replace(/[^a-z0-9.-]/gi, "");
+    await mkdir(UPLOADS, { recursive: true });
+    await writeFile(join(UPLOADS, nome), await corpo());
+    res.writeHead(200, { "Content-Type": "application/json" }); return res.end('{"ok":true}');
+  }
+  let pasta = RAIZ, caminho = normalize(decodeURIComponent(url.pathname)).replace(/^[\\/]+/, "");
+  if (caminho.startsWith("uploads")) { pasta = UPLOADS; caminho = caminho.replace(/^uploads[\\/]/, ""); }
   if (!caminho) caminho = "index.html";
   if (!extname(caminho)) caminho += ".html";
-  const arq = join(RAIZ, caminho);
-  if (!arq.startsWith(RAIZ)) { res.writeHead(403); return res.end(); }
+  const arq = join(pasta, caminho);
+  if (!arq.startsWith(pasta)) { res.writeHead(403); return res.end(); }
   try {
     const dados = await readFile(arq);
     res.writeHead(200, { "Content-Type": TIPOS[extname(arq)] || "application/octet-stream", "Cache-Control": "no-store" });

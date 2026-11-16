@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#061a63">
+<title>Rede One · Dinâmica</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="estilo.css">
+<link rel="stylesheet" href="dinamica.css">
+<style>
+  main { max-width: 520px; margin: 0 auto; padding: 22px 16px 40px; min-height: 100dvh; display: flex; flex-direction: column; }
+  header { text-align: center; margin-bottom: 18px; }
+  header .marca { font-size: 30px; }
+  header p { margin: 4px 0 0; color: var(--texto-2); font-size: 16px; }
+  .painel { background: var(--cartao); border: 1px solid var(--borda); border-radius: var(--raio); padding: 18px; box-shadow: var(--sombra); }
+  h2 { margin: 0 0 6px; font-size: 22px; }
+  .sub { color: var(--texto-2); margin: 0 0 16px; font-size: 15px; line-height: 1.4; }
+  .grupos { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .grupos button { border: 0; border-radius: 18px; padding: 26px 10px; background: var(--g); color: #061a63; font-size: 22px; font-weight: 900; box-shadow: 0 10px 24px rgba(0,0,0,.25); }
+  .grupos button:active { transform: scale(.97); }
+  .barra { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
+  .barra .rodada { font-weight: 700; color: var(--texto-2); }
+  .barra .relogio { font-size: 30px; }
+  .mesa { border-radius: 18px; padding: 16px; background: rgba(0,0,0,.22); border: 2px solid var(--g); margin-bottom: 14px; }
+  .mesa .rot { font-size: 13px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--g); }
+  .mesa .perg { font-size: 21px; font-weight: 700; line-height: 1.3; margin-top: 6px; }
+  textarea { width: 100%; min-height: 96px; resize: vertical; border-radius: 14px; padding: 13px; background: rgba(0,0,0,.25); border: 1px solid var(--borda); font-size: 17px; outline: none; }
+  textarea:focus { border-color: var(--destaque); }
+  .contador { text-align: right; font-size: 12px; color: var(--texto-3); margin: 4px 0 12px; }
+  .acoes .btn { width: 100%; }
+  #erro { margin-top: 12px; }
+  .ja { margin-top: 18px; }
+  .ja h3 { font-size: 14px; color: var(--texto-2); margin: 0 0 8px; font-weight: 700; }
+  .ja .r { background: rgba(255,255,255,.07); border-left: 4px solid var(--g); border-radius: 10px; padding: 9px 12px; margin-top: 6px; font-size: 15px; line-height: 1.35; }
+  .centro { text-align: center; padding: 26px 10px; }
+  .centro .icone { font-size: 60px; }
+  .centro h2 { margin-top: 10px; }
+  .meu-grupo { display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 16px; font-size: 14px; color: var(--texto-2); }
+  .meu-grupo button { background: none; border: 0; color: var(--destaque); font-weight: 700; text-decoration: underline; }
+  .proxima { margin-top: 12px; font-size: 16px; font-weight: 700; color: var(--destaque); }
+  footer { margin-top: auto; padding-top: 22px; text-align: center; color: var(--texto-3); font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div class="marca" id="titulo">Rede One</div>
+    <p id="subtitulo">Chamados para servir · Pastor Paulo</p>
+  </header>
+
+  <section class="painel oculto" id="t-grupo">
+    <h2>Qual é o seu grupo?</h2>
+    <p class="sub">Escolha o número que o Pastor Paulo deu para o seu grupo.</p>
+    <div class="grupos" id="grupos"></div>
+  </section>
+
+  <section class="painel centro oculto" id="t-espera">
+    <div class="icone">⏳</div>
+    <h2>Já vai começar!</h2>
+    <p class="sub">Assim que a primeira rodada começar, a pergunta da sua mesa aparece aqui.</p>
+  </section>
+
+  <section class="oculto" id="t-rodada">
+    <div class="barra"><span class="rodada" id="r-rodada">Rodada 1 de 4</span><span class="relogio" id="r-relogio">2:00</span></div>
+    <div class="mesa" id="r-mesa"><div class="rot" id="r-rot">Mesa 1</div><div class="perg" id="r-perg"></div></div>
+    <div class="painel">
+      <label for="texto" style="font-weight:700; display:block; margin-bottom:8px">Resposta do grupo</label>
+      <textarea id="texto" maxlength="200" placeholder="Escreva o que o grupo pensou… (pode mandar mais de uma)"></textarea>
+      <div class="contador" id="contador">0 / 200</div>
+      <div class="acoes"><button class="btn" id="enviar" disabled>Enviar resposta</button></div>
+      <div class="aviso oculto" id="erro" role="alert"></div>
+      <div class="proxima oculto" id="r-proxima"></div>
+    </div>
+    <div class="ja" id="ja"></div>
+  </section>
+
+  <section class="painel centro oculto" id="t-fim">
+    <div class="icone">🙌</div>
+    <h2>Rodadas encerradas!</h2>
+    <p class="sub">Agora olhe para o telão: vamos ver o que os grupos responderam e o que o texto bíblico ensina.</p>
+  </section>
+
+  <section class="painel centro oculto" id="t-fechado">
+    <div class="icone">⏸️</div>
+    <h2>Respostas pausadas</h2>
+    <p class="sub">O envio está pausado agora.</p>
+  </section>
+
+  <div class="meu-grupo oculto" id="meu-grupo"><span id="mg-chip" class="chip-grupo">Grupo 1</span><button id="trocar">trocar grupo</button></div>
+  <footer>Sem cadastro. As respostas aparecem no telão.</footer>
+</main>
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script>
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const ler = (k) => { try { return localStorage.getItem(k); } catch { return null; } };
+  const gravar = (k, v) => { try { localStorage.setItem(k, v); } catch {} };
+  const KG = `redeone.grupo.${REDEONE.evento}`;
+
+  let dispositivo = ler("redeone.dispositivo");
+  if (!dispositivo || !/^[A-Za-z0-9-]{8,64}$/.test(dispositivo)) {
+    dispositivo = crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2, 12);
+    gravar("redeone.dispositivo", dispositivo);
+  }
+  let grupo = Number(ler(KG)) || null;
+  let dados = null, prazo = null, esperaAte = 0;
+
+  const telas = (qual) => ["t-grupo", "t-espera", "t-rodada", "t-fim", "t-fechado"].forEach((id) => $(id).classList.toggle("oculto", id !== qual));
+  const fmt = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+  const mesaDe = (g, r, n) => ((g - 1 + r - 1) % n) + 1;
+
+  function botoesGrupos(n) {
+    const box = $("grupos"); if (box.children.length === n) return;
+    box.innerHTML = "";
+    for (let g = 1; g <= n; g++) {
+      const b = document.createElement("button"); b.className = `g${g}`; b.textContent = `Grupo ${g}`;
+      b.onclick = () => { grupo = g; gravar(KG, String(g)); navigator.vibrate?.(20); render(); };
+      box.appendChild(b);
+    }
+  }
+  $("trocar").onclick = () => { grupo = null; gravar(KG, ""); render(); };
+
+  let ultimaMesa = null;
+  function render() {
+    if (!dados) return;
+    const ev = dados.evento;
+    $("titulo").textContent = ev.titulo; $("subtitulo").textContent = ev.subtitulo;
+    botoesGrupos(ev.grupos);
+    $("meu-grupo").classList.toggle("oculto", !grupo);
+    if (grupo) { $("mg-chip").className = `chip-grupo g${grupo}`; $("mg-chip").textContent = `Grupo ${grupo}`; }
+    if (!grupo || grupo > ev.grupos) return telas("t-grupo");
+    if (!ev.aberto) return telas("t-fechado");
+    if (ev.rodada === 0) return telas("t-espera");
+    if (ev.rodada > ev.grupos) return telas("t-fim");
+
+    telas("t-rodada");
+    const m = mesaDe(grupo, ev.rodada, ev.grupos);
+    const mesa = (dados.mesas || []).find((x) => x.numero === m) || { pergunta: "" };
+    $("r-rodada").textContent = `Rodada ${ev.rodada} de ${ev.grupos}`;
+    $("r-mesa").className = `mesa g${m}`;
+    $("r-rot").textContent = `Seu grupo está na mesa ${m}`;
+    $("r-perg").textContent = mesa.pergunta;
+    if (ultimaMesa !== null && ultimaMesa !== m) { navigator.vibrate?.([60, 40, 60]); $("texto").value = ""; validar(); }
+    ultimaMesa = m;
+    // o que a mesa já recebeu (de todos os grupos), para não repetir
+    const ja = (dados.respostas || []).filter((r) => r.mesa === m);
+    const box = $("ja"); box.innerHTML = "";
+    if (ja.length) {
+      const h = document.createElement("h3"); h.textContent = `Já responderam nesta mesa (${ja.length})`; box.appendChild(h);
+      ja.slice(-8).reverse().forEach((r) => { const d = document.createElement("div"); d.className = `r g${r.grupo}`; d.textContent = r.texto; box.appendChild(d); });
+    }
+    tic();
+  }
+
+  function tic() {
+    if (!dados) return;
+    const ev = dados.evento;
+    if (ev.rodada < 1 || ev.rodada > ev.grupos) return;
+    const rest = ev.pausada ? ev.restante_s : prazo ? Math.max(0, Math.ceil((prazo - Date.now()) / 1000)) : null;
+    const el = $("r-relogio");
+    el.textContent = rest == null ? "" : ev.pausada ? `⏸ ${fmt(rest)}` : fmt(rest);
+    el.classList.toggle("acabando", rest != null && rest <= 20 && rest > 0);
+    el.classList.toggle("zerou", rest === 0 && !ev.pausada);
+    const prox = $("r-proxima");
+    if (rest === 0 && !ev.pausada && ev.rodada < ev.grupos) {
+      prox.textContent = `⏰ Tempo! Próxima: mesa ${mesaDe(grupo, ev.rodada + 1, ev.grupos)}`; prox.classList.remove("oculto");
+    } else prox.classList.add("oculto");
+    validar();
+  }
+  setInterval(tic, 500);
+
+  function validar() {
+    const n = $("texto").value.trim().length;
+    $("contador").textContent = `${$("texto").value.length} / 200`;
+    const falta = Math.ceil((esperaAte - Date.now()) / 1000);
+    const b = $("enviar");
+    if (b.dataset.enviando === "1") return;
+    b.disabled = n < 2 || falta > 0;
+    b.textContent = falta > 0 ? `Aguarde ${falta}s` : "Enviar resposta";
+  }
+  $("texto").addEventListener("input", () => { $("erro").classList.add("oculto"); validar(); });
+
+  const MSG = { palavrao: "Essa resposta tem palavras que não podem ir para o telão.", curta: "Escreva um pouco mais.",
+    longa: "Passou de 200 caracteres. Pode resumir?", tempo: "O tempo desta rodada acabou. Vá para a próxima mesa!",
+    fora_rodada: "A rodada ainda não começou ou já terminou.", grupo: "Escolha o seu grupo de novo.", fechado: "O envio está pausado." };
+  async function enviar() {
+    const b = $("enviar"); b.dataset.enviando = "1"; b.disabled = true; b.innerHTML = '<span class="spinner"></span> Enviando…';
+    try {
+      const r = await redeoneApi("responder", { grupo, texto: $("texto").value.trim(), dispositivo });
+      if (r.ok) {
+        $("texto").value = ""; esperaAte = Date.now() + 8000;
+        const t = $("toast"); t.textContent = "Resposta enviada ✅ Já está no telão"; t.classList.add("vis"); setTimeout(() => t.classList.remove("vis"), 2200);
+        atualizar();
+      } else if (r.erro === "espera") { esperaAte = Date.now() + (r.espera_s || 8) * 1000; }
+      else { $("erro").textContent = MSG[r.erro] || "Não deu para enviar. Tente de novo."; $("erro").classList.remove("oculto"); }
+    } catch { $("erro").textContent = "Sem conexão. Confira a internet e tente de novo."; $("erro").classList.remove("oculto"); }
+    finally { b.dataset.enviando = "0"; validar(); }
+  }
+  $("enviar").onclick = enviar;
+
+  async function atualizar() {
+    try {
+      const r = await redeoneApi("telao");
+      if (!r.ok) return;
+      if (redeoneTelaCerta(r.evento.modo, "perguntar.html", "dinamica.html")) return;
+      dados = r;
+      prazo = r.evento.restante_s != null && !r.evento.pausada ? Date.now() + r.evento.restante_s * 1000 : null;
+      render();
+    } catch { /* segue com o que tem */ }
+  }
+  atualizar();
+  redeoneAoVivo(atualizar, 2500);
+})();
+</script>
+</body>
+</html>

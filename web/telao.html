@@ -9,11 +9,8 @@
 <link rel="stylesheet" href="estilo.css">
 <style>
   html, body { height: 100%; overflow: hidden; }
-  body { cursor: default; }
   body.sem-cursor { cursor: none; }
-  #banner {
-    position: fixed; inset: 0; background-size: cover; background-position: center; z-index: 0;
-  }
+  #banner { position: fixed; inset: 0; background-size: cover; background-position: center; z-index: 0; }
   #banner.padrao {
     background:
       radial-gradient(60vw 60vh at 15% 20%, rgba(47, 107, 255, .55), transparent 60%),
@@ -29,17 +26,13 @@
   .topo .sub { font-size: clamp(16px, 1.6vw, 34px); color: var(--texto-2); font-weight: 600; }
   .lista { position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 2vh; overflow: hidden; }
   .card {
-    background: rgba(255, 255, 255, .1); border: 1px solid rgba(255, 255, 255, .18);
+    flex: 0 0 auto; background: rgba(255, 255, 255, .1); border: 1px solid rgba(255, 255, 255, .18);
     border-radius: 2vh; padding: 2.4vh 2vw; backdrop-filter: blur(14px); box-shadow: var(--sombra);
     animation: entra .7s cubic-bezier(.2, .9, .25, 1.1) both; transition: opacity .5s, transform .5s;
   }
-  .card { flex: 0 0 auto; }
   .card .txt { font-size: clamp(18px, 2.2vw, 46px); font-weight: 600; line-height: 1.25; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
   .card .quem { margin-top: 1vh; font-size: clamp(13px, 1.25vw, 26px); color: var(--destaque); font-weight: 700; }
-  .card.fixa {
-    background: linear-gradient(135deg, rgba(245, 200, 66, .22), rgba(245, 200, 66, .1));
-    border: 2px solid rgba(245, 200, 66, .85); padding: 3.6vh 2.6vw;
-  }
+  .card.fixa { background: linear-gradient(135deg, rgba(245, 200, 66, .22), rgba(245, 200, 66, .1)); border: 2px solid rgba(245, 200, 66, .85); padding: 3.6vh 2.6vw; }
   .card.fixa .txt { font-size: clamp(24px, 3.4vw, 72px); font-weight: 700; }
   .card.fixa .selo { display: inline-flex; align-items: center; gap: .5vw; font-size: clamp(12px, 1.1vw, 22px); font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: #061a63; background: var(--destaque); padding: .5vh .9vw; border-radius: 99px; margin-bottom: 1.6vh; }
   .card.sai { opacity: 0; transform: translateX(-4vw) scale(.97); }
@@ -48,17 +41,55 @@
   .vazio h2 { font-size: clamp(24px, 3.2vw, 66px); margin: 0 0 1.5vh; line-height: 1.1; }
   .vazio p { font-size: clamp(16px, 1.6vw, 34px); color: var(--texto-2); margin: 0; }
   .dir { display: flex; flex-direction: column; justify-content: flex-end; align-items: stretch; }
-  .qr-card { background: #fff; color: #11143a; border-radius: 2.4vh; padding: 2.4vh 1.4vw; text-align: center; box-shadow: var(--sombra); }
+  .qr-card { background: #fff; color: #061a63; border-radius: 2.4vh; padding: 2.4vh 1.4vw; text-align: center; box-shadow: var(--sombra); }
   .qr-card .chamada { font-weight: 800; font-size: clamp(15px, 1.5vw, 32px); line-height: 1.15; margin-bottom: 1.4vh; }
-  #qr { width: 100%; aspect-ratio: 1; display: grid; place-items: center; }
-  #qr svg, #qr img { width: 100%; height: 100%; }
-  .qr-card .url { margin-top: 1.2vh; font-size: clamp(11px, .95vw, 20px); font-weight: 600; color: #4b4f7a; word-break: break-all; }
-  .estado { position: fixed; top: 1.6vh; right: 1.4vw; z-index: 3; display: flex; gap: 10px; }
+  .qr { width: 100%; aspect-ratio: 1; display: grid; place-items: center; }
+  .qr svg { width: 100%; height: 100%; }
+  .qr-card .url { margin-top: 1.2vh; font-size: clamp(11px, .95vw, 20px); font-weight: 600; color: #3a4a8a; word-break: break-all; }
+  .estado { position: fixed; top: 1.6vh; right: 1.4vw; z-index: 30; display: flex; gap: 10px; }
   .pill { font-size: clamp(11px, .9vw, 18px); font-weight: 700; padding: .6vh .9vw; border-radius: 99px; background: rgba(0, 0, 0, .45); border: 1px solid var(--borda); }
   .pill.vermelho { background: rgba(255, 92, 122, .3); border-color: rgba(255, 92, 122, .7); }
-  #tela-cheia { position: fixed; left: 1.4vw; bottom: 1.6vh; z-index: 3; transition: opacity .4s; padding: 10px 14px; font-size: 15px; }
+  #tela-cheia { position: fixed; left: 1.4vw; bottom: 1.6vh; z-index: 30; transition: opacity .4s; padding: 10px 14px; font-size: 15px; }
   body.sem-cursor #tela-cheia { opacity: 0; pointer-events: none; }
   .mais { font-size: clamp(13px, 1.2vw, 24px); color: var(--texto-3); font-weight: 600; margin-top: 1vh; }
+
+  /* ── Modo apresentação ── */
+  #apres { position: fixed; inset: 0; z-index: 5; background: #000; display: none; }
+  body.apresentando #apres { display: block; }
+  body.apresentando .palco { display: none; }
+  .slide { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; transition: opacity .35s; }
+  .slide.escondido { opacity: 0; }
+  #apres.com-lado .slide { width: calc(100% - min(24vw, 420px) - 3.2vw); }
+  #apres-carregando { position: absolute; inset: 0; display: grid; place-items: center; color: var(--texto-2); font-size: 22px; }
+  .lado { position: absolute; top: 2.4vh; right: 1.6vw; bottom: 2.4vh; width: min(24vw, 420px); display: flex; flex-direction: column; gap: 1.4vh; z-index: 2; transition: opacity .4s, transform .4s; }
+  .lado.fora { opacity: 0; transform: translateX(3vw); pointer-events: none; }
+  .lado .mini { background: rgba(6, 26, 99, .78); border: 1px solid rgba(255, 255, 255, .22); border-radius: 1.6vh; padding: 1.6vh 1.1vw; backdrop-filter: blur(10px); animation: entra .6s both; }
+  .lado .mini .txt { font-size: clamp(13px, 1.15vw, 24px); font-weight: 600; line-height: 1.25; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  .lado .mini .quem { margin-top: .6vh; font-size: clamp(11px, .85vw, 17px); color: var(--destaque); font-weight: 700; }
+  .lado .titulo-lado { font-size: clamp(12px, .95vw, 19px); font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--destaque); text-shadow: 0 2px 8px rgba(0,0,0,.6); }
+  .lado .espaco { flex: 1; }
+  .lado .qr-card { padding: 1.4vh .9vw; }
+  .lado .qr-card .chamada { font-size: clamp(12px, 1vw, 20px); margin-bottom: .8vh; }
+  .lado .qr { width: 48%; margin: 0 auto; }
+  #lado-lista { display: flex; flex-direction: column; gap: 1.2vh; }
+  .num-slide { position: absolute; left: 1.4vw; bottom: 1.6vh; z-index: 2; font-size: 13px; color: rgba(255,255,255,.5); font-weight: 600; }
+
+  /* ── Pergunta destacada (tela inteira, fundo desfocado) ── */
+  #destaque { position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; padding: 6vh 7vw;
+    background: rgba(4, 16, 64, .55); backdrop-filter: blur(18px) saturate(1.1); -webkit-backdrop-filter: blur(18px);
+    opacity: 0; pointer-events: none; transition: opacity .45s; }
+  #destaque.vis { opacity: 1; }
+  #destaque .caixa { max-width: 78vw; text-align: center; transform: scale(.94); transition: transform .5s cubic-bezier(.2,.9,.25,1.1); }
+  #destaque.vis .caixa { transform: none; }
+  #destaque .selo { display: inline-block; font-size: clamp(14px, 1.3vw, 26px); font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: #061a63; background: var(--destaque); padding: .8vh 1.4vw; border-radius: 99px; margin-bottom: 3vh; }
+  #destaque .txt { font-size: clamp(30px, 4.6vw, 104px); font-weight: 800; line-height: 1.15; text-shadow: 0 6px 30px rgba(0,0,0,.45); }
+  #destaque .quem { margin-top: 3vh; font-size: clamp(18px, 2vw, 42px); color: var(--destaque); font-weight: 700; }
+
+  dialog { border: 1px solid var(--borda); border-radius: 18px; background: #0b2a8c; color: var(--texto); padding: 20px; width: min(380px, 90vw); }
+  dialog::backdrop { background: rgba(0,0,0,.6); }
+  dialog input { width: 100%; padding: 12px; border-radius: 12px; border: 1px solid var(--borda); background: rgba(0,0,0,.25); font-size: 22px; text-align: center; letter-spacing: .4em; margin: 12px 0; outline: none; }
+  dialog .linha { display: flex; gap: 10px; }
+  dialog .linha .btn { flex: 1; font-size: 15px; padding: 11px; }
   @media (max-width: 760px) {
     html, body { overflow: auto; }
     .palco { grid-template-columns: 1fr; height: auto; min-height: 100vh; padding: 20px 16px; }
@@ -70,6 +101,7 @@
 <body>
 <div id="banner" class="padrao"></div>
 <div class="estado"><span class="pill oculto" id="p-fechado">⏸️ Envio pausado</span><span class="pill vermelho oculto" id="p-offline">Sem conexão · tentando de novo</span></div>
+
 <div class="palco">
   <section class="esq">
     <div class="topo"><div class="marca" id="titulo">Rede One</div><div class="sub" id="subtitulo">Mande sua pergunta</div></div>
@@ -78,14 +110,39 @@
   <aside class="dir">
     <div class="qr-card">
       <div class="chamada">📱 Aponte a câmera<br>e mande sua pergunta</div>
-      <div id="qr"></div>
+      <div class="qr" id="qr"></div>
       <div class="url" id="url"></div>
     </div>
   </aside>
 </div>
+
+<section id="apres" aria-label="Apresentação">
+  <canvas class="slide" id="slide-a"></canvas>
+  <canvas class="slide escondido" id="slide-b"></canvas>
+  <div id="apres-carregando">Carregando a apresentação…</div>
+  <aside class="lado" id="lado">
+    <div class="titulo-lado">💬 Perguntas</div>
+    <div id="lado-lista"></div>
+    <div class="espaco"></div>
+    <div class="qr-card"><div class="chamada">📱 Mande sua pergunta</div><div class="qr" id="qr2"></div></div>
+  </aside>
+  <div class="num-slide" id="num-slide"></div>
+</section>
+
+<div id="destaque" aria-live="polite">
+  <div class="caixa"><div class="selo">💬 Pergunta</div><div class="txt" id="d-txt"></div><div class="quem" id="d-quem"></div></div>
+</div>
+
 <button class="btn sec" id="tela-cheia">⛶ Tela cheia (F)</button>
 
+<dialog id="pede-pin">
+  <b>PIN para passar os slides daqui</b>
+  <input id="pin-telao" type="password" inputmode="numeric" maxlength="12" placeholder="••••">
+  <div class="linha"><button class="btn sec" id="pin-cancelar">Cancelar</button><button class="btn" id="pin-ok">OK</button></div>
+</dialog>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="config.js"></script>
 <script>
@@ -93,30 +150,28 @@
   const $ = (id) => document.getElementById(id);
   const MAX = 5;
   const params = new URLSearchParams(location.search);
+  if (window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
 
-  // QR Code para a tela Perguntar (mesmo endereço do telão; ?link= troca, útil no teste local)
+  // QR Code para a tela Perguntar (?link= troca o endereço, útil no teste local)
   const destino = params.get("link") || new URL("perguntar.html" + (REDEONE.evento !== "rede-one-2026" ? `?evento=${encodeURIComponent(REDEONE.evento)}` : ""), location.href).href;
-  try {
-    const q = qrcode(0, "M"); q.addData(destino); q.make();
-    $("qr").innerHTML = q.createSvgTag({ cellSize: 8, margin: 0, scalable: true });
-  } catch { $("qr").textContent = "QR indisponível"; }
+  for (const alvo of ["qr", "qr2"]) {
+    try { const q = qrcode(0, "M"); q.addData(destino); q.make(); $(alvo).innerHTML = q.createSvgTag({ cellSize: 8, margin: 0, scalable: true }); }
+    catch { $(alvo).textContent = "QR indisponível"; }
+  }
   $("url").textContent = destino.replace(/^https?:\/\//, "");
 
+  // ── Lista de perguntas (modo perguntas) ──
   let atual = new Map();
   function render(perguntas) {
     const lista = $("lista");
     const fixa = perguntas.find((p) => p.fixada);
     const outras = perguntas.filter((p) => !p.fixada);
-    const mostrar = (fixa ? [fixa] : []).concat(outras.slice(0, fixa ? MAX - 2 : MAX));
+    const mostrar = (fixa ? [fixa] : []).concat(outras.slice(0, fixa ? MAX - 1 : MAX));
     const extra = perguntas.length - mostrar.length;
     const ids = new Set(mostrar.map((p) => p.id + (p.fixada ? ":f" : "")));
-
-    for (const [id, el] of atual) {
-      if (!ids.has(id)) { el.classList.add("sai"); setTimeout(() => el.remove(), 500); atual.delete(id); }
-    }
+    for (const [id, el] of atual) if (!ids.has(id)) { el.classList.add("sai"); setTimeout(() => el.remove(), 500); atual.delete(id); }
     lista.querySelector(".vazio")?.remove();
     lista.querySelector(".mais")?.remove();
-
     mostrar.forEach((p, i) => {
       const chave = p.id + (p.fixada ? ":f" : "");
       let el = atual.get(chave);
@@ -125,38 +180,100 @@
         el.className = "card" + (p.fixada ? " fixa" : "");
         if (p.fixada) { const s = document.createElement("div"); s.className = "selo"; s.textContent = "📌 Em destaque"; el.appendChild(s); }
         const t = document.createElement("div"); t.className = "txt"; t.textContent = p.texto; el.appendChild(t);
-        const q = document.createElement("div"); q.className = "quem"; q.textContent = p.nome ? p.nome : "Anônimo"; el.appendChild(q);
+        const q = document.createElement("div"); q.className = "quem"; q.textContent = p.nome || "Anônimo"; el.appendChild(q);
         atual.set(chave, el);
       }
       const ref = lista.children[i];
       if (ref !== el) lista.insertBefore(el, ref || null);
     });
-
     if (!mostrar.length) {
       const v = document.createElement("div"); v.className = "vazio";
       v.innerHTML = "<h2>Tem uma pergunta?</h2><p>Aponte a câmera do celular para o QR Code e mande. Pode ser anônima.</p>";
-      lista.appendChild(v);
-      return;
+      lista.appendChild(v); return;
     }
-    // Só mostra os cartões que cabem inteiros na tela do projetor; o resto vira "+N na fila"
-    const m = document.createElement("div"); m.className = "mais"; lista.appendChild(m);
+    // Só fica o que cabe inteiro na tela; o resto vira "+N na fila"
+    const m = document.createElement("div"); m.className = "mais"; m.textContent = "+ 0 na fila"; lista.appendChild(m);
     const cards = [...lista.querySelectorAll(".card:not(.sai)")];
     cards.forEach((c) => c.classList.remove("oculto"));
     let escondidos = 0;
-    const cabe = () => lista.scrollHeight <= lista.clientHeight + 1;
-    m.textContent = "+ 0 na fila";
-    for (let i = cards.length - 1; i > 0 && !cabe(); i--) { cards[i].classList.add("oculto"); escondidos++; }
+    // mede pela posição do aviso "+N" no fim da lista (a animação de entrada enganaria o scrollHeight)
+    const passou = () => m.offsetTop + m.offsetHeight > lista.clientHeight + 1;
+    for (let i = cards.length - 1; i > 0 && passou(); i--) { cards[i].classList.add("oculto"); escondidos++; }
     const fila = extra + escondidos;
     if (fila > 0) m.textContent = `+ ${fila} na fila`; else m.remove();
   }
-  window.addEventListener("resize", () => atualizar());
 
-  let ultimoBanner = null;
+  // ── Coluna de perguntas por cima dos slides ──
+  let ladoChave = null;
+  let ladoVisivel = null;
+  function renderLado(perguntas, mostrar) {
+    $("lado").classList.toggle("fora", !mostrar);
+    $("apres").classList.toggle("com-lado", !!mostrar);
+    if (ladoVisivel !== null && ladoVisivel !== !!mostrar) desenhar(paginaDesenhada || 1, true);   // slide muda de tamanho
+    ladoVisivel = !!mostrar;
+    const lista = perguntas.slice(0, 3);
+    const chave = lista.map((p) => p.id + (p.fixada ? "f" : "")).join(",");
+    if (chave === ladoChave) return;                       // só redesenha quando muda (senão a animação reinicia)
+    ladoChave = chave;
+    const caixa = $("lado-lista"); caixa.innerHTML = "";
+    if (!lista.length) {
+      const v = document.createElement("div"); v.className = "mini";
+      v.innerHTML = '<div class="txt">Leia o QR Code e mande sua pergunta 👇</div>'; caixa.appendChild(v); return;
+    }
+    for (const p of lista) {
+      const el = document.createElement("div"); el.className = "mini";
+      const t = document.createElement("div"); t.className = "txt"; t.textContent = p.texto; el.appendChild(t);
+      const q = document.createElement("div"); q.className = "quem"; q.textContent = (p.fixada ? "📌 " : "") + (p.nome || "Anônimo"); el.appendChild(q);
+      caixa.appendChild(el);
+    }
+  }
+
+  // ── Slides (PDF desenhado com pdf.js, troca com fade) ──
+  let pdf = null, pdfUrl = null, paginaDesenhada = 0, desenhando = null, pedida = 1, frente = "slide-a";
+  async function carregarPdf(url) {
+    if (url === pdfUrl) return;
+    pdfUrl = url; pdf = null; paginaDesenhada = 0;
+    $("apres-carregando").classList.remove("oculto"); $("apres-carregando").textContent = "Carregando a apresentação…";
+    try { pdf = await pdfjsLib.getDocument({ url }).promise; $("apres-carregando").classList.add("oculto"); }
+    catch { $("apres-carregando").textContent = "Não consegui abrir o PDF da apresentação."; }
+  }
+  async function desenhar(n, forcar) {
+    pedida = n;
+    if (!pdf || (n === paginaDesenhada && !forcar) || desenhando) return;
+    desenhando = (async () => {
+      const num = Math.min(Math.max(n, 1), pdf.numPages);
+      const pagina = await pdf.getPage(num);
+      const base = pagina.getViewport({ scale: 1 });
+      const tras = frente === "slide-a" ? "slide-b" : "slide-a";
+      const cv = $(tras);
+      const escala = Math.min((cv.clientWidth || innerWidth) / base.width, (cv.clientHeight || innerHeight) / base.height) * (devicePixelRatio || 1);
+      const vp = pagina.getViewport({ scale: escala }); cv.width = vp.width; cv.height = vp.height;
+      await pagina.render({ canvasContext: cv.getContext("2d"), viewport: vp }).promise;
+      cv.classList.remove("escondido"); $(frente).classList.add("escondido"); frente = tras;
+      paginaDesenhada = num;
+      $("num-slide").textContent = `${num} / ${pdf.numPages}`;
+      // deixa a próxima página pronta no cache do pdf.js
+      if (num < pdf.numPages) pdf.getPage(num + 1).catch(() => {});
+    })().finally(() => { desenhando = null; if (pedida !== paginaDesenhada) desenhar(pedida); });
+  }
+
+  // ── Destaque ──
+  let destaqueId = null;
+  function renderDestaque(d) {
+    const vis = !!d;
+    if (vis && d.id !== destaqueId) { $("d-txt").textContent = d.texto; $("d-quem").textContent = d.nome || "Anônimo"; }
+    destaqueId = vis ? d.id : null;
+    $("destaque").classList.toggle("vis", vis);
+  }
+
+  let ultimoBanner = null, ultimo = null;
   async function atualizar() {
     try {
       const r = await redeoneApi("telao");
       $("p-offline").classList.add("oculto");
       if (!r.ok) return;
+      if (redeoneTelaCerta(r.evento.modo, "telao.html", "dinamica-telao.html")) return;
+      ultimo = r;
       $("titulo").textContent = r.evento.titulo; $("subtitulo").textContent = r.evento.subtitulo;
       $("p-fechado").classList.toggle("oculto", r.evento.aberto);
       const banner = params.get("banner") || r.evento.banner_url || null;
@@ -165,20 +282,55 @@
         $("banner").classList.toggle("padrao", !banner);
         $("banner").style.backgroundImage = banner ? `url("${banner.replace(/"/g, "")}")` : "";
       }
-      render(r.perguntas);
+      const apresentando = r.evento.telao_modo === "apresentacao" && !!r.evento.slides_url && !!window.pdfjsLib;
+      document.body.classList.toggle("apresentando", apresentando);
+      renderDestaque(r.destaque);
+      if (apresentando) {
+        renderLado(r.perguntas, r.evento.mostrar_perguntas_slides);
+        await carregarPdf(r.evento.slides_url);
+        desenhar(r.evento.slide_atual);
+      } else {
+        render(r.perguntas);
+      }
     } catch { $("p-offline").classList.remove("oculto"); }
   }
+  window.addEventListener("resize", () => { if (document.body.classList.contains("apresentando")) desenhar(paginaDesenhada || 1, true); else atualizar(); });
 
-  // Tela cheia e cursor que some
+  // ── Passar slide pelo teclado/passador no computador da igreja (pede o PIN uma vez) ──
+  const CHAVE = `redeone.pin.${REDEONE.evento}`;
+  const lerPin = () => { try { return localStorage.getItem(CHAVE); } catch { return null; } };
+  function pedirPin() {
+    return new Promise((ok) => {
+      $("pin-telao").value = ""; $("pede-pin").showModal(); $("pin-telao").focus();
+      $("pin-ok").onclick = () => { const v = $("pin-telao").value.trim(); $("pede-pin").close(); try { localStorage.setItem(CHAVE, v); } catch {} ok(v); };
+      $("pin-cancelar").onclick = () => { $("pede-pin").close(); ok(null); };
+    });
+  }
+  async function passar(delta) {
+    if (!ultimo || !document.body.classList.contains("apresentando")) return;
+    let pin = lerPin() || await pedirPin(); if (!pin) return;
+    const total = ultimo.evento.slides_total || pdf?.numPages || 1;
+    const alvo = Math.min(Math.max((ultimo.evento.slide_atual || 1) + delta, 1), total);
+    ultimo.evento.slide_atual = alvo; desenhar(alvo);                       // mostra na hora
+    const r = await redeoneApi("slide", { pin, delta }).catch(() => null);
+    if (r && !r.ok && r.erro === "pin") { try { localStorage.removeItem(CHAVE); } catch {} }
+    atualizar();
+  }
+
   const cheia = () => document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen?.();
   $("tela-cheia").onclick = cheia;
-  document.addEventListener("keydown", (e) => { if (e.key === "f" || e.key === "F") cheia(); });
+  document.addEventListener("keydown", (e) => {
+    if ($("pede-pin").open) { if (e.key === "Enter") $("pin-ok").click(); return; }
+    if (e.key === "f" || e.key === "F") cheia();
+    else if (["ArrowRight", "PageDown", " ", "ArrowDown"].includes(e.key)) { e.preventDefault(); passar(1); }
+    else if (["ArrowLeft", "PageUp", "ArrowUp"].includes(e.key)) { e.preventDefault(); passar(-1); }
+  });
   let tCursor;
   const mexeu = () => { document.body.classList.remove("sem-cursor"); clearTimeout(tCursor); tCursor = setTimeout(() => document.body.classList.add("sem-cursor"), 3000); };
   document.addEventListener("mousemove", mexeu); mexeu();
 
   atualizar();
-  redeoneAoVivo(atualizar, 2500);
+  redeoneAoVivo(atualizar, 1500);
 })();
 </script>
 </body>

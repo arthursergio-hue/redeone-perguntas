@@ -192,6 +192,7 @@
     try {
       const r = await redeoneApi("telao");
       if (r.ok) {
+        if (redeoneTelaCerta(r.evento.modo, "perguntar.html", "dinamica.html")) return;
         $("titulo").textContent = r.evento.titulo; $("subtitulo").textContent = r.evento.subtitulo;
         document.title = `${r.evento.titulo} · Perguntas`;
         if (!r.evento.aberto) telas("fechado"); else if (!$("fechado").classList.contains("oculto")) telas("form");

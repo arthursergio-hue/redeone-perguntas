@@ -60,6 +60,25 @@
   dialog .linha { display: flex; gap: 10px; margin-top: 18px; }
   dialog .linha .btn { flex: 1; font-size: 15px; padding: 12px; }
   .links a { display: block; color: var(--destaque); margin: 6px 0; font-size: 14px; word-break: break-all; }
+  .apres { background: var(--cartao); border: 1px solid var(--borda); border-radius: 16px; padding: 12px; margin-bottom: 12px; }
+  .modo-telao { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 4px; border-radius: 12px; background: rgba(0,0,0,.25); }
+  .modo-telao button { border: 0; border-radius: 9px; padding: 10px 6px; background: transparent; color: var(--texto-2); font-weight: 700; font-size: 14px; }
+  .modo-telao button.ativo { background: var(--texto); color: #061a63; }
+  #apres-corpo { margin-top: 12px; display: grid; gap: 10px; }
+  .slide-nav { display: grid; grid-template-columns: 64px 1fr 64px; gap: 8px; align-items: stretch; }
+  .slide-nav .nav { border: 0; border-radius: 14px; background: var(--destaque); color: #061a63; font-size: 26px; font-weight: 900; }
+  .slide-nav .nav:active { transform: scale(.96); }
+  .previa { position: relative; border-radius: 12px; overflow: hidden; background: #000; aspect-ratio: 16 / 9; display: grid; place-items: center; }
+  .previa canvas { width: 100%; height: 100%; object-fit: contain; }
+  .previa span { position: absolute; right: 8px; bottom: 6px; font-size: 12px; font-weight: 700; background: rgba(0,0,0,.6); padding: 2px 8px; border-radius: 99px; }
+  .subir { display: block; text-align: center; border: 1.5px dashed var(--borda); border-radius: 12px; padding: 12px; font-weight: 700; cursor: pointer; }
+  .subir:active { background: var(--cartao-forte); }
+  .dica-pdf { margin: 0; font-size: 12px; color: var(--texto-3); line-height: 1.35; }
+  .barra-destaque { position: sticky; top: 0; z-index: 6; display: flex; align-items: center; gap: 8px; padding: 10px 12px; margin-bottom: 8px; border-radius: 14px; background: var(--destaque); color: #061a63; font-size: 14px; }
+  .barra-destaque b { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .barra-destaque button { border: 0; border-radius: 10px; padding: 8px 12px; background: #061a63; color: #fff; font-weight: 700; }
+  .item.na-tela { border-color: var(--destaque); box-shadow: 0 0 0 2px var(--destaque) inset; }
+  .item .botoes .tv { background: #fff; color: #061a63; border: 0; }
 </style>
 </head>
 <body>
@@ -85,6 +104,30 @@
     <div class="chaves">
       <div class="chave"><span>Aprovar antes de aparecer</span><button class="sw" id="sw-aprovar" aria-label="Aprovar antes de aparecer"></button></div>
       <div class="chave"><span>Receber perguntas</span><button class="sw" id="sw-aberto" aria-label="Receber perguntas"></button></div>
+    </div>
+
+    <section class="apres" id="apres">
+      <div class="apres-topo">
+        <div class="modo-telao" role="tablist" aria-label="O que o telão mostra">
+          <button data-modo="perguntas">💬 Perguntas</button>
+          <button data-modo="apresentacao">🎞️ Apresentação</button>
+        </div>
+      </div>
+      <div id="apres-corpo">
+        <div class="slide-nav" id="slide-nav">
+          <button class="nav" id="s-ant" aria-label="Slide anterior">◀</button>
+          <div class="previa"><canvas id="previa"></canvas><span id="s-num">–</span></div>
+          <button class="nav" id="s-prox" aria-label="Próximo slide">▶</button>
+        </div>
+        <div class="chave"><span>Perguntas por cima dos slides</span><button class="sw" id="sw-lado" aria-label="Perguntas por cima dos slides"></button></div>
+        <label class="subir"><input type="file" id="arquivo" accept="application/pdf,.pdf" hidden><span id="subir-txt">⬆️ Subir apresentação (PDF)</span></label>
+        <p class="dica-pdf">PowerPoint, Keynote ou Canva: <b>Salvar/Baixar como PDF</b>. No computador da igreja, abra o telão e passe os slides pelo passador ou pelas setas.</p>
+      </div>
+    </section>
+
+    <div class="barra-destaque oculto" id="barra-destaque">
+      <span>📺 Na tela inteira:</span><b id="bd-txt"></b>
+      <button id="bd-fechar">Fechar</button>
     </div>
 
     <nav class="abas" id="abas">
@@ -116,6 +159,7 @@
 
 <div class="toast" id="toast"><span id="toast-msg"></span><button id="toast-desfazer">Desfazer</button></div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="config.js"></script>
 <script>
@@ -139,7 +183,9 @@
     if (!r.ok) throw new Error(r.erro || "servidor");
     $("estado-con").textContent = "Ao vivo · atualizado " + new Date().toLocaleTimeString("pt-BR");
     $("estado-con").classList.remove("erro");
-    dados = r; render(); return r;
+    dados = r;
+    if (redeoneTelaCerta(r.evento?.modo, "controle.html", "dinamica-controle.html")) return r;
+    render(); return r;
   }
 
   async function entrar() {
@@ -151,7 +197,9 @@
       const r = await redeoneApi("entrar", { pin: v });
       if (!r.ok) throw new Error(r.erro);
       pin = v; gravar(CHAVE, v, $("lembrar").checked);
-      dados = r; mostrarPainel();
+      dados = r;
+      if (redeoneTelaCerta(r.evento?.modo, "controle.html", "dinamica-controle.html")) return;
+      mostrarPainel();
     } catch (e) {
       $("pin-erro").textContent = ERROS[e.message] || "Sem conexão. Confira a internet.";
       $("pin-erro").classList.remove("oculto");
@@ -191,7 +239,8 @@
     respondida: [["aprovar", "↩️ Voltar ao telão", ""]],
     oculta: [["aprovar", "↩️ Mostrar no telão", ""], ["pendente", "📥 Voltar às novas", ""]],
   };
-  const NOME_ACAO = { aprovar: "Aprovada · já está no telão", responder: "Marcada como respondida", ocultar: "Ocultada", fixar: "Fixada em destaque", desafixar: "Destaque removido", pendente: "Voltou para as novas" };
+  const SEM_DESFAZER = new Set(["destacar", "tirar_destaque"]);
+  const NOME_ACAO = { destacar: "📺 Na tela inteira", tirar_destaque: "Saiu da tela inteira", aprovar: "Aprovada · já está no telão", responder: "Marcada como respondida", ocultar: "Ocultada", fixar: "Fixada em destaque", desafixar: "Destaque removido", pendente: "Voltou para as novas" };
 
   function render() {
     const ev = dados.evento || {};
@@ -203,6 +252,10 @@
     for (const k in cont) $(`n-${k}`).textContent = cont[k];
     document.querySelector('[data-aba="pendente"]').classList.toggle("alerta", cont.pendente > 0);
     document.title = cont.pendente ? `(${cont.pendente}) Rede One · Controle` : "Rede One · Controle";
+    renderApres(ev);
+    const dq = ev.destaque_id && dados.perguntas.find((p) => p.id === ev.destaque_id);
+    $("barra-destaque").classList.toggle("oculto", !dq);
+    if (dq) $("bd-txt").textContent = dq.texto;
 
     // vibra quando chega pergunta nova
     const idsPend = new Set(dados.perguntas.filter((p) => p.status === "pendente").map((p) => p.id));
@@ -219,7 +272,8 @@
       lista.appendChild(v); return;
     }
     for (const p of itens) {
-      const el = document.createElement("article"); el.className = "item" + (p.fixada ? " fixa" : "");
+      const naTela = p.id === ev.destaque_id;
+      const el = document.createElement("article"); el.className = "item" + (p.fixada ? " fixa" : "") + (naTela ? " na-tela" : "");
       const t = document.createElement("div"); t.className = "txt"; t.textContent = p.texto; el.appendChild(t);
       const m = document.createElement("div"); m.className = "meta";
       const quem = document.createElement("b"); quem.textContent = p.nome || "Anônimo"; m.appendChild(quem);
@@ -231,6 +285,13 @@
         const a = acao === "fixar" && p.fixada ? "desafixar" : acao;
         const b = document.createElement("button"); b.className = cls;
         b.textContent = a === "desafixar" ? "📌 Tirar destaque" : rotulo;
+        b.onclick = () => agir(p, a, b);
+        bs.appendChild(b);
+      }
+      if (p.status === "pendente" || p.status === "aprovada") {
+        const b = document.createElement("button"); b.className = "tv";
+        const a = naTela ? "tirar_destaque" : "destacar";
+        b.textContent = naTela ? "📺 Fechar tela inteira" : "📺 Mostrar inteira";
         b.onclick = () => agir(p, a, b);
         bs.appendChild(b);
       }
@@ -260,6 +321,7 @@
     botao.disabled = true;
     try {
       await chamar("agir", { id: p.id, acao });
+      if (SEM_DESFAZER.has(acao)) { toast(NOME_ACAO[acao]); return; }
       toast(NOME_ACAO[acao], async () => {
         try {
           await chamar("agir", { id: p.id, acao: voltarPara[antes.status] });
@@ -277,13 +339,13 @@
   $("sw-aprovar").onclick = () => config({ aprovar_antes: !dados.evento.aprovar_antes });
   $("sw-aberto").onclick = () => config({ aberto: !dados.evento.aberto });
 
-  const urlDe = (pag) => new URL(pag + (REDEONE.evento !== "rede-one-2026" ? `?evento=${encodeURIComponent(REDEONE.evento)}` : ""), location.href).href;
+  const urlDe = (pag) => new URL(pag + (pag.includes("?") || REDEONE.evento === "rede-one-2026" ? "" : `?evento=${encodeURIComponent(REDEONE.evento)}`), location.href).href;
   $("abrir-telao").onclick = () => window.open(urlDe("telao.html"), "_blank");
   $("abrir-ajustes").onclick = () => {
     const ev = dados.evento;
     $("a-titulo").value = ev.titulo || ""; $("a-sub").value = ev.subtitulo || ""; $("a-banner").value = ev.banner_url || ""; $("a-pin").value = "";
     $("links").innerHTML = "";
-    for (const [r, pag] of [["Perguntar (QR Code)", "perguntar.html"], ["Telão", "telao.html"]]) {
+    for (const [r, pag] of [["Perguntar (QR Code)", "perguntar.html"], ["Telão", "telao.html"], ["Dinâmica do Pastor Paulo · controle", "dinamica-controle.html?evento=rede-one-paulo"]]) {
       const a = document.createElement("a"); a.href = urlDe(pag); a.target = "_blank"; a.textContent = `${r}: ${urlDe(pag)}`; $("links").appendChild(a);
     }
     $("ajustes").showModal();
@@ -309,6 +371,74 @@
     const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
     a.download = `perguntas-${REDEONE.evento}-${new Date().toISOString().slice(0, 10)}.csv`; a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  };
+
+  // ── Apresentação: modo do telão, slides, prévia e upload do PDF ──
+  if (window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+  let pdfPrevia = null, pdfPreviaUrl = null, previaDesenhada = null;
+  async function renderApres(ev) {
+    const modo = ev.telao_modo || "perguntas";
+    document.querySelectorAll(".modo-telao button").forEach((b) => b.classList.toggle("ativo", b.dataset.modo === modo));
+    $("sw-lado").classList.toggle("on", !!ev.mostrar_perguntas_slides);
+    const tem = !!ev.slides_url;
+    $("slide-nav").classList.toggle("oculto", !tem);
+    $("subir-txt").textContent = tem ? `🔁 Trocar apresentação (${ev.slides_total || "?"} slides)` : "⬆️ Subir apresentação (PDF)";
+    $("s-num").textContent = tem ? `${ev.slide_atual} / ${ev.slides_total || "?"}` : "–";
+    if (!tem || !window.pdfjsLib) return;
+    previaPedida = { url: ev.slides_url, n: ev.slide_atual };
+    desenharPrevia();
+  }
+  // Um desenho por vez no mesmo quadro (dois ao mesmo tempo embaralham a imagem); sempre o último pedido
+  let previaPedida = null, previaOcupada = false;
+  async function desenharPrevia() {
+    if (previaOcupada || !previaPedida) return;
+    const { url, n } = previaPedida; const chave = `${url}#${n}`;
+    if (chave === previaDesenhada) return;
+    previaOcupada = true;
+    try {
+      if (pdfPreviaUrl !== url) { pdfPrevia = await pdfjsLib.getDocument({ url }).promise; pdfPreviaUrl = url; }
+      const pg = await pdfPrevia.getPage(Math.min(n, pdfPrevia.numPages));
+      const vp0 = pg.getViewport({ scale: 1 });
+      const vp = pg.getViewport({ scale: 640 / vp0.width });
+      const tmp = document.createElement("canvas"); tmp.width = vp.width; tmp.height = vp.height;
+      await pg.render({ canvasContext: tmp.getContext("2d"), viewport: vp }).promise;
+      const cv = $("previa"); cv.width = tmp.width; cv.height = tmp.height; cv.getContext("2d").drawImage(tmp, 0, 0);
+      previaDesenhada = chave;
+    } catch { previaDesenhada = null; }
+    finally { previaOcupada = false; if (previaPedida && `${previaPedida.url}#${previaPedida.n}` !== previaDesenhada) desenharPrevia(); }
+  }
+  document.querySelectorAll(".modo-telao button").forEach((b) => b.onclick = () => {
+    if (b.dataset.modo === "apresentacao" && !dados.evento.slides_url) toast("Suba o PDF da apresentação primeiro 👇");
+    config({ telao_modo: b.dataset.modo });
+  });
+  $("sw-lado").onclick = () => config({ mostrar_perguntas_slides: !dados.evento.mostrar_perguntas_slides });
+  async function slide(delta) {
+    const ev = dados.evento, total = ev.slides_total || 1;
+    ev.slide_atual = Math.min(Math.max((ev.slide_atual || 1) + delta, 1), total); renderApres(ev);   // resposta na hora
+    navigator.vibrate?.(15);
+    try { await chamar("slide", { delta }); } catch (e) { if (e.message !== "pin") toast("Não passou o slide. Confira a conexão."); }
+  }
+  $("s-ant").onclick = () => slide(-1);
+  $("s-prox").onclick = () => slide(1);
+  $("bd-fechar").onclick = async () => { try { await chamar("agir", { id: dados.evento.destaque_id, acao: "tirar_destaque" }); } catch {} };
+  $("arquivo").onchange = async () => {
+    const f = $("arquivo").files[0]; $("arquivo").value = "";
+    if (!f) return;
+    if (f.type !== "application/pdf" && !/\.pdf$/i.test(f.name)) { toast("Precisa ser PDF. No PowerPoint/Canva: Salvar como PDF."); return; }
+    if (f.size > 50 * 1024 * 1024) { toast("O PDF passou de 50 MB. Exporte com qualidade menor."); return; }
+    const etiqueta = $("subir-txt"); const antes = etiqueta.textContent;
+    try {
+      etiqueta.textContent = "Lendo o PDF…";
+      const doc = await pdfjsLib.getDocument({ data: new Uint8Array(await f.arrayBuffer()) }).promise;
+      const total = doc.numPages;
+      const url = await redeoneSubirPdf(f, pin, (m) => etiqueta.textContent = m);
+      etiqueta.textContent = "Ligando no telão…";
+      await chamar("config", { cfg: { slides_url: url, slides_total: total, telao_modo: "apresentacao" } });
+      toast(`Apresentação no telão · ${total} slides ✅`);
+    } catch (e) {
+      etiqueta.textContent = antes;
+      if (e.message !== "pin") toast("Não consegui subir o PDF. Tente de novo.");
+    }
   };
 
   setInterval(() => pin && render(), 30000); // atualiza o "há X min"

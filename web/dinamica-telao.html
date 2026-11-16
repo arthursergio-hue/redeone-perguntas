@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rede One · Dinâmica · Telão</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="estilo.css">
+<link rel="stylesheet" href="dinamica.css">
+<style>
+  html, body { height: 100%; overflow: hidden; }
+  body.sem-cursor { cursor: none; }
+  body { background:
+      radial-gradient(60vw 60vh at 15% 20%, rgba(47, 107, 255, .5), transparent 60%),
+      radial-gradient(50vw 50vh at 90% 85%, rgba(64, 160, 255, .4), transparent 60%),
+      linear-gradient(160deg, #061a63, #0b2f9e 55%, #061a63); }
+  .palco { height: 100vh; display: flex; flex-direction: column; padding: 3.2vh 2.6vw; gap: 2.4vh; }
+  .topo { display: flex; align-items: center; gap: 1.6vw; }
+  .topo .marca { font-size: clamp(26px, 3.4vw, 72px); line-height: 1; }
+  .topo .sub { font-size: clamp(14px, 1.4vw, 30px); color: var(--texto-2); font-weight: 600; flex: 1; }
+  .placar { text-align: right; }
+  .placar .rot { font-size: clamp(13px, 1.2vw, 26px); color: var(--texto-2); font-weight: 700; }
+  .placar .relogio { font-size: clamp(36px, 5vw, 110px); line-height: 1; }
+  .corpo { flex: 1; min-height: 0; display: flex; gap: 1.6vw; }
+
+  /* rodadas: uma coluna por mesa */
+  .mesas { flex: 1; display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 1.4vw; min-height: 0; }
+  .col { display: flex; flex-direction: column; min-height: 0; border-radius: 2vh; background: rgba(255,255,255,.08); border: 2px solid var(--g); overflow: hidden; }
+  .col .cab { padding: 1.8vh 1.2vw; background: linear-gradient(180deg, rgba(0,0,0,.25), transparent); }
+  .col .num { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: clamp(12px, 1vw, 22px); font-weight: 900; letter-spacing: .08em; text-transform: uppercase; color: var(--g); }
+  .col .perg { margin-top: 1vh; font-size: clamp(15px, 1.45vw, 32px); font-weight: 700; line-height: 1.25; }
+  .col .aqui { font-size: clamp(11px, .85vw, 18px); padding: .3vh .7vw; }
+  .col .resps { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 1vh; padding: 0 1vw 1.6vh; overflow: hidden; }
+  .col .resps > :first-child:not(.oculto), .col .resps > .oculto + :not(.oculto) { margin-top: auto; }
+  .resp { background: rgba(255,255,255,.12); border-left: .45vw solid var(--g); border-radius: 1.2vh; padding: 1.1vh .9vw; font-size: clamp(13px, 1.12vw, 24px); line-height: 1.3; animation: entra .6s cubic-bezier(.2,.9,.25,1.1) both; }
+  @keyframes entra { from { opacity: 0; transform: translateY(2vh); } to { opacity: 1; transform: none; } }
+  .col .conta { padding: 0 1vw 1.2vh; font-size: clamp(11px, .85vw, 18px); color: var(--texto-3); font-weight: 600; }
+
+  /* antes de começar */
+  .inicio { flex: 1; display: grid; grid-template-columns: 1.3fr 1fr; gap: 4vw; align-items: center; }
+  .inicio h2 { font-size: clamp(30px, 4.2vw, 92px); line-height: 1.05; margin: 0 0 3vh; }
+  .inicio p { font-size: clamp(16px, 1.7vw, 36px); color: var(--texto-2); margin: 0 0 3vh; line-height: 1.35; }
+  .inicio .chips { display: flex; gap: 1vw; flex-wrap: wrap; }
+  .inicio .chip-grupo { font-size: clamp(14px, 1.5vw, 32px); padding: 1vh 1.4vw; }
+  .qr-grande { background: #fff; color: #061a63; border-radius: 3vh; padding: 3vh 2vw; text-align: center; max-width: 34vw; justify-self: center; }
+  .qr-grande .ch { font-weight: 800; font-size: clamp(16px, 1.7vw, 36px); margin-bottom: 2vh; }
+  .qr-grande .qr { width: 26vw; max-width: 100%; aspect-ratio: 1; margin: 0 auto; }
+  .qr-grande .url { margin-top: 1.4vh; font-size: clamp(11px, .95vw, 20px); color: #3a4a8a; font-weight: 600; word-break: break-all; }
+  .qr svg { width: 100%; height: 100%; }
+  .qr-mini { width: clamp(90px, 8vw, 170px); background: #fff; border-radius: 1.4vh; padding: .8vh; align-self: flex-end; }
+
+  /* confronto */
+  .confronto { flex: 1; display: grid; grid-template-columns: 1.25fr 1fr; gap: 2vw; min-height: 0; }
+  .lado-a, .lado-b { border-radius: 2.4vh; padding: 3vh 2vw; min-height: 0; display: flex; flex-direction: column; }
+  .lado-a { background: rgba(255,255,255,.08); border: 2px solid var(--g); }
+  .lado-b { background: linear-gradient(160deg, rgba(245,200,66,.2), rgba(245,200,66,.06)); border: 2px solid rgba(245,200,66,.8); }
+  .eti { font-size: clamp(12px, 1.05vw, 22px); font-weight: 900; letter-spacing: .1em; text-transform: uppercase; color: var(--g, var(--destaque)); margin-bottom: 1.2vh; }
+  .lado-b .eti { color: var(--destaque); }
+  .lado-a .perg { font-size: clamp(20px, 2.3vw, 50px); font-weight: 800; line-height: 1.2; margin-bottom: 2.4vh; }
+  .nuvem { flex: 1; min-height: 0; display: flex; flex-wrap: wrap; align-content: flex-start; gap: 1.2vh .8vw; overflow: hidden; }
+  .nuvem .resp { border-left: 0; border-radius: 99px; padding: 1vh 1.2vw; background: color-mix(in srgb, var(--g) 26%, transparent); border: 1px solid var(--g); }
+  .ensina { list-style: none; padding: 0; margin: 0; display: grid; gap: 1.8vh; }
+  .ensina li { font-size: clamp(16px, 1.75vw, 38px); font-weight: 700; line-height: 1.3; padding-left: 2vw; position: relative; }
+  .ensina li::before { content: "✦"; position: absolute; left: 0; color: var(--destaque); }
+  .vazio-ensina { color: var(--texto-3); font-size: clamp(14px, 1.3vw, 28px); }
+  .pontos { display: flex; gap: .8vw; justify-content: center; margin-top: 1vh; }
+  .pontos span { width: 1vw; height: 1vw; min-width: 10px; min-height: 10px; border-radius: 50%; background: rgba(255,255,255,.25); }
+  .pontos span.on { background: var(--destaque); }
+
+  .estado { position: fixed; top: 1.4vh; left: 50%; transform: translateX(-50%); z-index: 9; }
+  .pill { font-size: clamp(11px, .9vw, 18px); font-weight: 700; padding: .6vh .9vw; border-radius: 99px; background: rgba(255, 92, 122, .3); border: 1px solid rgba(255, 92, 122, .7); }
+  #tela-cheia { position: fixed; left: 1.4vw; bottom: 1.6vh; z-index: 9; transition: opacity .4s; padding: 10px 14px; font-size: 15px; }
+  body.sem-cursor #tela-cheia { opacity: 0; pointer-events: none; }
+</style>
+</head>
+<body>
+<div class="estado"><span class="pill oculto" id="p-offline">Sem conexão · tentando de novo</span></div>
+<div class="palco">
+  <div class="topo">
+    <div class="marca" id="titulo">Rede One</div>
+    <div class="sub" id="subtitulo">Chamados para servir · Pastor Paulo</div>
+    <div class="placar"><div class="rot" id="rot">Dinâmica</div><div class="relogio" id="relogio"></div></div>
+  </div>
+  <div class="corpo" id="corpo"></div>
+</div>
+<button class="btn sec" id="tela-cheia">⛶ Tela cheia (F)</button>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script>
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const params = new URLSearchParams(location.search);
+  const destino = params.get("link") || new URL(`dinamica.html?evento=${encodeURIComponent(REDEONE.evento)}`, location.href).href;
+  const qrSvg = () => { try { const q = qrcode(0, "M"); q.addData(destino); q.make(); return q.createSvgTag({ cellSize: 8, margin: 0, scalable: true }); } catch { return ""; } };
+  const QR = qrSvg();
+  const fmt = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+  const mesaDe = (g, r, n) => ((g - 1 + r - 1) % n) + 1;
+  const el = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; };
+
+  let dados = null, prazo = null, fase = null, vistas = new Set();
+
+  function relogio() {
+    if (!dados) return;
+    const ev = dados.evento, r = $("relogio");
+    if (ev.rodada < 1 || ev.rodada > ev.grupos) { r.textContent = ""; return; }
+    const rest = ev.pausada ? ev.restante_s : prazo ? Math.max(0, Math.ceil((prazo - Date.now()) / 1000)) : null;
+    r.textContent = rest == null ? "" : (ev.pausada ? "⏸ " : "") + (rest === 0 && !ev.pausada ? "Tempo!" : fmt(rest));
+    r.classList.toggle("acabando", rest != null && rest <= 20 && rest > 0);
+    r.classList.toggle("zerou", rest === 0 && !ev.pausada);
+  }
+  setInterval(relogio, 250);
+
+  function inicio(ev) {
+    const c = $("corpo"); c.innerHTML = "";
+    const w = el("div", "inicio");
+    const a = el("div");
+    a.appendChild(el("h2", null, "Bora servir junto? 🙌"));
+    a.appendChild(el("p", null, "Leia o QR Code, escolha o número do seu grupo e aguarde. Em cada rodada o grupo vai para uma mesa e responde a pergunta dela pelo celular."));
+    const chips = el("div", "chips");
+    for (let g = 1; g <= ev.grupos; g++) chips.appendChild(el("span", `chip-grupo g${g}`, `Grupo ${g}`));
+    a.appendChild(chips);
+    const q = el("div", "qr-grande");
+    q.appendChild(el("div", "ch", "📱 Aponte a câmera"));
+    const qq = el("div", "qr"); qq.innerHTML = QR; q.appendChild(qq);
+    q.appendChild(el("div", "url", destino.replace(/^https?:\/\//, "")));
+    w.appendChild(a); w.appendChild(q); c.appendChild(w);
+  }
+
+  function rodadas(ev) {
+    const c = $("corpo");
+    const chave = `rodada${ev.rodada}`;
+    if (fase !== chave) {
+      fase = chave; vistas = new Set(); c.innerHTML = "";
+      const grade = el("div", "mesas"); grade.id = "grade";
+      for (const m of dados.mesas) {
+        const col = el("section", `col g${m.numero}`); col.id = `col${m.numero}`;
+        const cab = el("div", "cab");
+        const num = el("div", "num"); num.appendChild(el("span", null, `Mesa ${m.numero}`));
+        const quem = [...Array(ev.grupos).keys()].map((i) => i + 1).find((g) => mesaDe(g, ev.rodada, ev.grupos) === m.numero);
+        const chip = el("span", `chip-grupo aqui g${quem}`, `Grupo ${quem} aqui`); num.appendChild(chip);
+        cab.appendChild(num); cab.appendChild(el("div", "perg", m.pergunta));
+        col.appendChild(cab);
+        const rs = el("div", "resps"); rs.id = `rs${m.numero}`; col.appendChild(rs);
+        col.appendChild(el("div", "conta")).id = `ct${m.numero}`;
+        grade.appendChild(col);
+      }
+      c.appendChild(grade);
+      const mini = el("div", "qr-mini"); mini.innerHTML = QR; c.appendChild(mini);
+    }
+    const ativos = new Set(dados.respostas.map((r) => r.id));
+    for (const m of dados.mesas) {
+      const rs = $(`rs${m.numero}`); if (!rs) continue;
+      [...rs.children].forEach((x) => { if (!ativos.has(x.dataset.id)) x.remove(); });   // oculta pelo controle
+      const daMesa = dados.respostas.filter((r) => r.mesa === m.numero);
+      for (const r of daMesa) {
+        if (vistas.has(r.id)) continue;
+        vistas.add(r.id);
+        const d = el("div", `resp g${r.grupo}`, r.texto); d.dataset.id = r.id; rs.appendChild(d);
+      }
+      $(`ct${m.numero}`).textContent = `${daMesa.length} resposta${daMesa.length === 1 ? "" : "s"}`;
+    }
+  }
+
+  // Mostra só as respostas que cabem em cada coluna (as mais novas embaixo); nada é apagado
+  function caber() {
+    // mede pela altura dos cartões (a animação de entrada desloca o cartão e enganaria o scrollHeight)
+    document.querySelectorAll(".col .resps").forEach((rs) => {
+      const cs = getComputedStyle(rs);
+      const livre = rs.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+      const gap = parseFloat(cs.rowGap) || 0;
+      const filhos = [...rs.children];
+      filhos.forEach((x) => x.classList.remove("oculto"));
+      let usado = 0;
+      for (let i = filhos.length - 1; i >= 0; i--) {
+        usado += filhos[i].offsetHeight + (i < filhos.length - 1 ? gap : 0);
+        if (usado > livre && i < filhos.length - 1) { for (let j = i; j >= 0; j--) filhos[j].classList.add("oculto"); break; }
+      }
+    });
+  }
+
+  function confronto(ev) {
+    const c = $("corpo");
+    const foco = ev.foco_mesa || 1;
+    const chave = `conf${foco}:${dados.respostas.length}:${dados.mesas.map((m) => m.texto_ensina).join("|").length}`;
+    if (fase === chave) return;
+    fase = chave; c.innerHTML = "";
+    const m = dados.mesas.find((x) => x.numero === foco) || dados.mesas[0];
+    const w = el("div", "confronto");
+    const a = el("section", `lado-a g${m.numero}`);
+    a.appendChild(el("div", "eti", `Mesa ${m.numero} · o que os grupos disseram`));
+    a.appendChild(el("div", "perg", m.pergunta));
+    const nuvem = el("div", "nuvem");
+    dados.respostas.filter((r) => r.mesa === m.numero).forEach((r) => nuvem.appendChild(el("span", `resp g${r.grupo}`, r.texto)));
+    if (!nuvem.children.length) nuvem.appendChild(el("span", "vazio-ensina", "Nenhuma resposta nesta mesa."));
+    a.appendChild(nuvem);
+    const b = el("section", "lado-b");
+    b.appendChild(el("div", "eti", "📖 O que o texto ensina"));
+    const linhas = (m.texto_ensina || "").split(/\n+/).map((s) => s.replace(/^[-•*\s]+/, "").trim()).filter(Boolean);
+    if (linhas.length) { const ul = el("ul", "ensina"); linhas.forEach((l) => ul.appendChild(el("li", null, l))); b.appendChild(ul); }
+    else b.appendChild(el("div", "vazio-ensina", "O Pastor Paulo apresenta agora ✨"));
+    const pts = el("div", "pontos");
+    dados.mesas.forEach((x) => pts.appendChild(el("span", x.numero === m.numero ? "on" : "")));
+    b.appendChild(el("div", null)).style.flex = "1"; b.appendChild(pts);
+    w.appendChild(a); w.appendChild(b); c.appendChild(w);
+  }
+
+  function render() {
+    const ev = dados.evento;
+    $("titulo").textContent = ev.titulo; $("subtitulo").textContent = ev.subtitulo;
+    if (ev.rodada === 0) { $("rot").textContent = "Dinâmica"; if (fase !== "inicio") { fase = "inicio"; inicio(ev); } }
+    else if (ev.rodada <= ev.grupos) { $("rot").textContent = `Rodada ${ev.rodada} de ${ev.grupos}`; rodadas(ev); caber(); requestAnimationFrame(() => requestAnimationFrame(caber)); }
+    else { $("rot").textContent = "Confronto"; confronto(ev); }
+    relogio();
+  }
+
+  async function atualizar() {
+    try {
+      const r = await redeoneApi("telao");
+      $("p-offline").classList.add("oculto");
+      if (!r.ok) return;
+      if (redeoneTelaCerta(r.evento.modo, "telao.html", "dinamica-telao.html")) return;
+      dados = r;
+      prazo = r.evento.restante_s != null && !r.evento.pausada ? Date.now() + r.evento.restante_s * 1000 : null;
+      render();
+    } catch { $("p-offline").classList.remove("oculto"); }
+  }
+
+  const cheia = () => document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen?.();
+  $("tela-cheia").onclick = cheia;
+  document.addEventListener("keydown", (e) => { if (e.key === "f" || e.key === "F") cheia(); });
+  let tC; const mexeu = () => { document.body.classList.remove("sem-cursor"); clearTimeout(tC); tC = setTimeout(() => document.body.classList.add("sem-cursor"), 3000); };
+  document.addEventListener("mousemove", mexeu); mexeu();
+  window.addEventListener("resize", () => { fase = null; dados && render(); });
+
+  document.fonts?.ready.then(() => caber());
+  atualizar();
+  redeoneAoVivo(atualizar, 1500);
+})();
+</script>
+</body>
+</html>

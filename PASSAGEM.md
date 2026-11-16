@@ -34,6 +34,12 @@ Limite de 1 pergunta / 30 s por aparelho, filtro de palavrão, tempo real, celul
    e a Raquel; depois o texto bíblico e, no fim, o confronto do que se produziu com o que o texto ensina.
    O Arthur propôs trocar as cartolinas pelo celular, com as respostas na tela (Paulo ainda não respondeu).
 
+## Situação em 16/11/2026 (fim da 2ª etapa)
+- Feitos e testados no local: modo apresentação (PDF, slides pelo celular ou passador, coluna de perguntas,
+  pergunta inteira com fundo desfocado) e a dinâmica do Pastor Paulo (3 telas). Migração 002 aplicada no Supabase
+  (evento `rede-one-paulo` com o mesmo PIN, bucket `redeone`). Painel de prints: `provas/00-painel-entrega.png`.
+- As 4 perguntas das mesas estão como "Pergunta da mesa N (o Pastor Paulo define)": trocar no controle da dinâmica.
+
 ## Falta do Arthur
 Nome do endereço (sugestão `redeone-perguntas`), arquivo das apresentações, as 4 perguntas do Pastor Paulo.
 

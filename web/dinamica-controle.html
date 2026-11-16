@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#061a63">
+<meta name="robots" content="noindex">
+<title>Rede One · Dinâmica · Controle</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="estilo.css">
+<link rel="stylesheet" href="dinamica.css">
+<style>
+  main { max-width: 640px; margin: 0 auto; padding: 18px 16px 90px; }
+  .pin { min-height: 92dvh; display: flex; flex-direction: column; justify-content: center; text-align: center; }
+  .pin .marca { font-size: 32px; }
+  .pin p { color: var(--texto-2); margin: 6px 0 24px; }
+  .pin input { width: 100%; max-width: 260px; margin: 0 auto 14px; text-align: center; letter-spacing: .5em; font-size: 30px; font-weight: 700; padding: 14px; border-radius: 16px; background: rgba(0,0,0,.25); border: 1px solid var(--borda); outline: none; }
+  .pin .btn { width: 100%; max-width: 260px; margin: 0 auto; }
+  .pin .aviso { max-width: 300px; margin: 14px auto 0; }
+  .cab { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+  .cab .marca { font-size: 22px; }
+  .cab small { display: block; color: var(--texto-2); font-size: 13px; }
+  .icone-btn { width: 42px; height: 42px; border-radius: 12px; border: 1px solid var(--borda); background: var(--cartao); color: var(--texto); font-size: 19px; }
+  .bloco { background: var(--cartao); border: 1px solid var(--borda); border-radius: 16px; padding: 14px; margin-bottom: 12px; }
+  .bloco h3 { margin: 0 0 10px; font-size: 15px; color: var(--texto-2); }
+  .placar { display: flex; align-items: baseline; justify-content: space-between; }
+  .placar .fase { font-size: 20px; font-weight: 800; }
+  .placar .relogio { font-size: 44px; }
+  .mapa { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 10px; }
+  .mapa div { border-radius: 10px; padding: 8px 4px; text-align: center; font-size: 12px; font-weight: 800; color: #061a63; background: var(--g); }
+  .grande { width: 100%; font-size: 19px; padding: 18px; margin-top: 12px; }
+  .linha-btn { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 8px; }
+  .linha-btn button { border: 1px solid var(--borda); background: var(--cartao-forte); color: var(--texto); border-radius: 12px; padding: 12px 6px; font-weight: 700; font-size: 14px; }
+  .dur { display: flex; gap: 6px; margin-top: 10px; align-items: center; font-size: 13px; color: var(--texto-2); }
+  .dur button { border: 1px solid var(--borda); background: transparent; color: var(--texto); border-radius: 99px; padding: 6px 12px; font-weight: 700; }
+  .dur button.on { background: var(--texto); color: #061a63; }
+  .focos { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .focos button { border: 2px solid var(--g); background: transparent; color: var(--texto); border-radius: 12px; padding: 14px 4px; font-weight: 800; }
+  .focos button.on { background: var(--g); color: #061a63; }
+  .mesa-ed { border-left: 4px solid var(--g); padding: 8px 0 8px 12px; margin-bottom: 12px; }
+  .mesa-ed b { color: var(--g); font-size: 13px; letter-spacing: .06em; text-transform: uppercase; }
+  .mesa-ed input, .mesa-ed textarea { width: 100%; margin-top: 6px; border-radius: 10px; padding: 10px; background: rgba(0,0,0,.25); border: 1px solid var(--borda); font-size: 15px; outline: none; }
+  .mesa-ed textarea { min-height: 64px; resize: vertical; }
+  .mesa-ed small { color: var(--texto-3); font-size: 12px; }
+  .resp { display: flex; gap: 8px; align-items: flex-start; padding: 9px 0; border-top: 1px solid rgba(255,255,255,.08); }
+  .resp .t { flex: 1; font-size: 15px; line-height: 1.35; }
+  .resp.oc .t { opacity: .4; text-decoration: line-through; }
+  .resp button { border: 1px solid var(--borda); background: var(--cartao-forte); color: var(--texto); border-radius: 10px; padding: 6px 10px; font-size: 12px; font-weight: 700; white-space: nowrap; }
+  .resp .chip-grupo { font-size: 11px; padding: 2px 8px; }
+  .filtro { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 6px; }
+  .filtro button { border: 1px solid var(--borda); background: transparent; color: var(--texto-2); border-radius: 99px; padding: 6px 12px; font-weight: 700; font-size: 13px; }
+  .filtro button.on { background: var(--texto); color: #061a63; }
+  .chave { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-weight: 600; }
+  .sw { position: relative; flex: 0 0 auto; width: 50px; height: 30px; border-radius: 99px; background: rgba(255,255,255,.2); border: 0; }
+  .sw::after { content: ""; position: absolute; top: 3px; left: 3px; width: 24px; height: 24px; border-radius: 50%; background: #fff; transition: transform .2s; }
+  .sw.on { background: var(--verde); } .sw.on::after { transform: translateX(20px); }
+  .rodape { display: flex; gap: 10px; }
+  .rodape .btn { flex: 1; font-size: 14px; padding: 12px; }
+  .estado-con { font-size: 12px; color: var(--texto-3); text-align: center; margin-top: 10px; }
+  .vazio { color: var(--texto-3); font-size: 14px; padding: 10px 0; }
+</style>
+</head>
+<body>
+<main>
+  <section class="pin" id="tela-pin">
+    <div class="marca">Rede One</div>
+    <p>Dinâmica do Pastor Paulo · digite o PIN</p>
+    <input id="pin" type="password" inputmode="numeric" maxlength="12" placeholder="••••••">
+    <button class="btn" id="entrar">Entrar</button>
+    <div class="aviso oculto" id="pin-erro" role="alert"></div>
+  </section>
+
+  <section class="oculto" id="painel">
+    <div class="cab">
+      <div><div class="marca">Dinâmica</div><small id="sub">Chamados para servir · Pastor Paulo</small></div>
+      <button class="icone-btn" id="abrir-telao" title="Abrir telão">🖥️</button>
+    </div>
+
+    <div class="bloco">
+      <div class="placar"><span class="fase" id="fase">Antes de começar</span><span class="relogio" id="relogio"></span></div>
+      <div class="mapa" id="mapa"></div>
+      <button class="btn grande" id="principal">▶ Começar rodada 1</button>
+      <div class="linha-btn" id="extras">
+        <button id="b-pausa">⏸ Pausar</button>
+        <button id="b-mais">+30 s</button>
+        <button id="b-volta">⏮ Voltar</button>
+      </div>
+      <div class="dur" id="dur"><span>Tempo por mesa:</span></div>
+    </div>
+
+    <div class="bloco oculto" id="b-confronto">
+      <h3>📖 Confronto · qual mesa está no telão</h3>
+      <div class="focos" id="focos"></div>
+    </div>
+
+    <div class="bloco">
+      <h3>🪑 Perguntas das mesas e o que o texto ensina</h3>
+      <div id="mesas-ed"></div>
+      <button class="btn" id="salvar-mesas" style="width:100%">Salvar mesas</button>
+    </div>
+
+    <div class="bloco">
+      <h3 id="t-resps">💬 Respostas</h3>
+      <div class="filtro" id="filtro"></div>
+      <div id="resps"></div>
+    </div>
+
+    <div class="bloco"><div class="chave"><span>Receber respostas</span><button class="sw" id="sw-aberto"></button></div></div>
+
+    <div class="rodape">
+      <button class="btn sec" id="csv">⬇️ CSV</button>
+      <button class="btn sec" id="zerar">↺ Zerar</button>
+      <button class="btn sec" id="ir-pedro">💬 Perguntas</button>
+    </div>
+    <div class="estado-con" id="estado-con">Ao vivo</div>
+  </section>
+</main>
+<div class="toast" id="toast"><span id="toast-msg"></span></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script>
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const CHAVE = `redeone.pin.${REDEONE.evento}`;
+  const ler = (k) => { try { return localStorage.getItem(k); } catch { return null; } };
+  const gravar = (k, v) => { try { localStorage.setItem(k, v); } catch {} };
+  const fmt = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+  const mesaDe = (g, r, n) => ((g - 1 + r - 1) % n) + 1;
+  const el = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; };
+
+  let pin = ler(CHAVE) || ler("redeone.pin.rede-one-2026");
+  let dados = null, prazo = null, filtro = 0, mesasEditando = false;
+
+  function toast(m) { $("toast-msg").textContent = m; $("toast").classList.add("vis"); clearTimeout(toast.t); toast.t = setTimeout(() => $("toast").classList.remove("vis"), 2600); }
+
+  async function chamar(op, extra = {}) {
+    const r = await redeoneApi(op, { pin, ...extra });
+    if (!r.ok && r.erro === "pin") { pin = null; $("painel").classList.add("oculto"); $("tela-pin").classList.remove("oculto"); throw new Error("pin"); }
+    if (!r.ok) throw new Error(r.erro || "servidor");
+    if (redeoneTelaCerta(r.evento?.modo, "controle.html", "dinamica-controle.html")) return r;
+    dados = r;
+    prazo = r.evento.restante_s != null && !r.evento.pausada ? Date.now() + r.evento.restante_s * 1000 : null;
+    $("estado-con").textContent = "Ao vivo · " + new Date().toLocaleTimeString("pt-BR");
+    render(); return r;
+  }
+
+  async function entrar() {
+    const v = $("pin").value.trim(); if (!v) return;
+    try { pin = v; await chamar("entrar"); gravar(CHAVE, v); mostrar(); }
+    catch (e) { $("pin-erro").textContent = e.message === "pin" ? "PIN errado." : e.message === "bloqueado" ? "Muitas tentativas. Espere 10 minutos." : "Sem conexão."; $("pin-erro").classList.remove("oculto"); }
+  }
+  $("entrar").onclick = entrar;
+  $("pin").addEventListener("keydown", (e) => { if (e.key === "Enter") entrar(); });
+
+  let vivo = false;
+  function mostrar() {
+    $("tela-pin").classList.add("oculto"); $("painel").classList.remove("oculto");
+    if (!vivo) { vivo = true; redeoneAoVivo(() => pin && chamar("listar").catch(() => {}), 2500); }
+  }
+
+  function relogio() {
+    if (!dados) return;
+    const ev = dados.evento, r = $("relogio");
+    if (ev.rodada < 1 || ev.rodada > ev.grupos) { r.textContent = ""; return; }
+    const rest = ev.pausada ? ev.restante_s : prazo ? Math.max(0, Math.ceil((prazo - Date.now()) / 1000)) : null;
+    r.textContent = rest == null ? "" : (ev.pausada ? "⏸ " : "") + fmt(rest);
+    r.classList.toggle("acabando", rest != null && rest <= 20 && rest > 0);
+    r.classList.toggle("zerou", rest === 0 && !ev.pausada);
+    if (rest === 0 && !ev.pausada && !relogio.vibrou) { navigator.vibrate?.([200, 100, 200]); relogio.vibrou = true; }
+    if (rest > 0) relogio.vibrou = false;
+  }
+  setInterval(relogio, 250);
+
+  function render() {
+    const ev = dados.evento, n = ev.grupos;
+    $("sub").textContent = ev.subtitulo;
+    $("sw-aberto").classList.toggle("on", ev.aberto);
+    const emRodada = ev.rodada >= 1 && ev.rodada <= n;
+    $("fase").textContent = ev.rodada === 0 ? "Antes de começar" : emRodada ? `Rodada ${ev.rodada} de ${n}` : "Confronto";
+    // mapa: grupo → mesa nesta rodada
+    const mapa = $("mapa"); mapa.innerHTML = "";
+    if (emRodada) for (let g = 1; g <= n; g++) mapa.appendChild(el("div", `g${g}`, `G${g} → Mesa ${mesaDe(g, ev.rodada, n)}`));
+    $("principal").textContent = ev.rodada === 0 ? "▶ Começar rodada 1" : ev.rodada < n ? `⏭ Próxima rodada (${ev.rodada + 1})` : ev.rodada === n ? "📖 Ir para o confronto" : "✓ No confronto";
+    $("principal").disabled = ev.rodada > n;
+    $("extras").classList.toggle("oculto", !emRodada);
+    $("b-pausa").textContent = ev.pausada ? "▶ Retomar" : "⏸ Pausar";
+    // duração
+    const dur = $("dur"); [...dur.querySelectorAll("button")].forEach((b) => b.remove());
+    for (const s of [60, 120, 180, 300]) {
+      const b = el("button", ev.duracao_s === s ? "on" : "", s < 120 ? "1 min" : `${s / 60} min`);
+      b.onclick = () => chamar("config", { cfg: { duracao_s: s } }).then(() => toast(`Tempo por mesa: ${b.textContent} (vale da próxima rodada)`)).catch(() => {});
+      dur.appendChild(b);
+    }
+    // confronto
+    $("b-confronto").classList.toggle("oculto", ev.rodada <= n);
+    const focos = $("focos"); focos.innerHTML = "";
+    for (const m of dados.mesas) {
+      const b = el("button", `g${m.numero}` + ((ev.foco_mesa || 1) === m.numero ? " on" : ""), `Mesa ${m.numero}`);
+      b.onclick = () => chamar("config", { cfg: { foco_mesa: m.numero } }).catch(() => {});
+      focos.appendChild(b);
+    }
+    // editor das mesas (não sobrescreve enquanto está digitando)
+    if (!mesasEditando) {
+      const box = $("mesas-ed"); box.innerHTML = "";
+      for (const m of dados.mesas) {
+        const d = el("div", `mesa-ed g${m.numero}`);
+        d.appendChild(el("b", null, `Mesa ${m.numero}`));
+        const i = el("input"); i.value = m.pergunta; i.dataset.n = m.numero; i.dataset.c = "pergunta"; i.maxLength = 200; i.placeholder = "Pergunta da mesa";
+        const t = el("textarea"); t.value = m.texto_ensina; t.dataset.n = m.numero; t.dataset.c = "texto_ensina"; t.maxLength = 1000; t.placeholder = "O que o texto ensina (um ponto por linha) — aparece no confronto";
+        for (const x of [i, t]) x.addEventListener("input", () => { mesasEditando = true; });
+        d.appendChild(i); d.appendChild(t); d.appendChild(el("small", null, "Os pontos do texto só aparecem no telão no confronto."));
+        box.appendChild(d);
+      }
+    }
+    // respostas
+    const fl = $("filtro"); fl.innerHTML = "";
+    for (const k of [0, ...dados.mesas.map((m) => m.numero)]) {
+      const b = el("button", filtro === k ? "on" : "", k ? `Mesa ${k}` : "Todas"); b.onclick = () => { filtro = k; render(); }; fl.appendChild(b);
+    }
+    const lista = dados.respostas.filter((r) => !filtro || r.mesa === filtro);
+    $("t-resps").textContent = `💬 Respostas (${dados.respostas.length})`;
+    const box = $("resps"); box.innerHTML = "";
+    if (!lista.length) box.appendChild(el("div", "vazio", "Nenhuma resposta ainda."));
+    for (const r of lista.slice(0, 80)) {
+      const d = el("div", "resp" + (r.oculta ? " oc" : ""));
+      d.appendChild(el("span", `chip-grupo g${r.grupo}`, `M${r.mesa}·G${r.grupo}`));
+      d.appendChild(el("div", "t", r.texto));
+      const b = el("button", null, r.oculta ? "Mostrar" : "🙈 Ocultar");
+      b.onclick = () => chamar("agir", { id: r.id, acao: r.oculta ? "mostrar_resposta" : "ocultar_resposta" }).catch(() => {});
+      d.appendChild(b); box.appendChild(d);
+    }
+    relogio();
+  }
+
+  const rodada = (acao) => chamar("rodada", { acao }).catch((e) => e.message !== "pin" && toast("Não deu certo. Confira a conexão."));
+  $("principal").onclick = () => { navigator.vibrate?.(30); rodada(dados.evento.rodada === 0 ? "iniciar" : "proxima"); };
+  $("b-pausa").onclick = () => rodada(dados.evento.pausada ? "retomar" : "pausar");
+  $("b-mais").onclick = () => rodada("mais30");
+  $("b-volta").onclick = () => rodada("anterior");
+  $("zerar").onclick = () => { if (confirm("Voltar a dinâmica para o começo? As respostas continuam guardadas.")) rodada("zerar"); };
+  $("sw-aberto").onclick = () => chamar("config", { cfg: { aberto: !dados.evento.aberto } }).catch(() => {});
+  $("salvar-mesas").onclick = async () => {
+    const mesas = dados.mesas.map((m) => ({ numero: m.numero, pergunta: m.pergunta, texto_ensina: m.texto_ensina }));
+    document.querySelectorAll("#mesas-ed [data-n]").forEach((x) => { mesas.find((m) => m.numero === Number(x.dataset.n))[x.dataset.c] = x.value.trim(); });
+    try { mesasEditando = false; await chamar("mesas", { mesas }); toast("Mesas salvas ✅"); } catch { toast("Não salvou. Confira a conexão."); }
+  };
+  $("abrir-telao").onclick = () => window.open(`dinamica-telao.html?evento=${encodeURIComponent(REDEONE.evento)}`, "_blank");
+  $("ir-pedro").onclick = () => { location.href = "controle.html"; };
+  $("csv").onclick = () => {
+    const esc = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+    const perg = Object.fromEntries(dados.mesas.map((m) => [m.numero, m.pergunta]));
+    const linhas = [["Hora", "Mesa", "Pergunta da mesa", "Grupo", "Rodada", "Resposta", "Oculta"].map(esc).join(";")];
+    dados.respostas.slice().reverse().forEach((r) => linhas.push([new Date(r.criada_em).toLocaleString("pt-BR"), r.mesa, perg[r.mesa], r.grupo, r.rodada, r.texto, r.oculta ? "sim" : ""].map(esc).join(";")));
+    const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob(["﻿" + linhas.join("\r\n")], { type: "text/csv;charset=utf-8" }));
+    a.download = `dinamica-${REDEONE.evento}.csv`; a.click();
+  };
+
+  if (pin) chamar("listar").then(mostrar).catch(() => { $("tela-pin").classList.remove("oculto"); });
+  else $("pin").focus();
+})();
+</script>
+</body>
+</html>
