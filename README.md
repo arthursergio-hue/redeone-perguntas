@@ -36,7 +36,11 @@ node dev/servidor.mjs
 http://localhost:5174 (PIN local `1234`). `node dev/semear.mjs` põe perguntas de exemplo e confere as regras.
 PDF de teste: `dev/exemplo-apresentacao.pdf`.
 
-## Falta para publicar
+## No ar (desde 16/11/2026)
 
-1. Publicar a Edge Function `redeone` (a trava de permissão da sessão barrou; precisa do OK do Arthur).
-2. Hospedar `web/` de graça (GitHub Pages / Netlify) e conferir o QR Code com o endereço final.
+- Celular (QR Code): https://arthursergio-hue.github.io/redeone-perguntas/perguntar.html
+- Telão: https://arthursergio-hue.github.io/redeone-perguntas/telao.html
+- Controle: https://arthursergio-hue.github.io/redeone-perguntas/controle.html
+- Site: GitHub Pages, publicado sozinho a cada push na `main` (`.github/workflows/pages.yml`).
+- Servidor: Edge Function `redeone` no Supabase da igreja (publicar de novo após mudar `supabase/functions/redeone`).
+- Capas das palestras: `capas/` (fundos feitos no Magnific; texto e fotos oficiais compostos à parte) e `web/capas/`.
