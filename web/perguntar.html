@@ -44,10 +44,12 @@
   .tela-fim p { color: var(--texto-2); font-size: 17px; margin: 0 0 22px; line-height: 1.4; }
   .resumo { text-align: left; background: rgba(0,0,0,.25); border-radius: 14px; padding: 14px; margin: 0 0 20px; font-size: 16px; line-height: 1.4; border: 1px solid var(--borda); }
   .resumo small { display: block; color: var(--texto-3); margin-top: 6px; }
+  body.carregando #abas, body.carregando #form { opacity: .35; pointer-events: none; }
+  #abas, #form { transition: opacity .4s; }
   footer { margin-top: auto; padding-top: 24px; text-align: center; color: var(--texto-3); font-size: 13px; }
 </style>
 </head>
-<body>
+<body class="carregando">
 <main>
   <header>
     <div class="capa"><img id="capa" alt="Conferência Rede One" src="https://kkhzmvcqcljptlntlmwm.supabase.co/storage/v1/object/public/evento-capas/e242eae2-2ff6-480b-bd83-f569b36a80e1.jpg"></div>
@@ -241,12 +243,14 @@
       }
       if (!temPastor && tipo === "resposta") trocarTipo("pergunta");
       aberta = temPastor;
+      document.body.classList.remove("carregando");
       if (!ev.aberto && tipo === "pergunta") telas("fechado");
       else if (!$("fechado").classList.contains("oculto")) telas("form");
     } catch { /* segue com o que tem */ }
   }
   modo(comNome);
   carregar();
+  setTimeout(() => document.body.classList.remove("carregando"), 8000);   // sem internet: libera mesmo assim
   redeoneAoVivo(carregar, 5000);
 })();
 </script>

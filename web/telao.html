@@ -10,6 +10,13 @@
 <link rel="stylesheet" href="estilo.css">
 <style>
   html, body { height: 100%; overflow: hidden; }
+  /* até chegar o primeiro dado, só a marca pulsando (sem mostrar a tela errada) */
+  .palco, #tela, #mural { transition: opacity .6s; }
+  body.carregando .palco, body.carregando #tela, body.carregando #mural { opacity: 0; }
+  #abertura { position: fixed; inset: 0; display: grid; place-items: center; z-index: 40; pointer-events: none; transition: opacity .6s; }
+  #abertura .marca { font-size: clamp(40px, 6vw, 130px); animation: respira 1.8s ease-in-out infinite; }
+  body:not(.carregando) #abertura { opacity: 0; }
+  @keyframes respira { 50% { opacity: .45; } }
   body.sem-cursor { cursor: none; }
   @keyframes entra { from { opacity: 0; transform: translateY(3vh) scale(.97); filter: blur(6px); } to { opacity: 1; transform: none; filter: none; } }
 
@@ -128,7 +135,8 @@
   }
 </style>
 </head>
-<body>
+<body class="carregando">
+<div id="abertura"><div class="marca">Rede <b>One</b></div></div>
 <div class="estado"><span class="pill oculto" id="p-fechado">⏸️ Envio pausado</span><span class="pill vermelho oculto" id="p-offline">Sem conexão · tentando de novo</span></div>
 
 <!-- Perguntas -->
@@ -392,6 +400,7 @@
         if (modo === "imagem") mostrarImagem(imagem);
         else { mostrarSlides(); await carregarPdf(ev.slides_url); desenhar(ev.slide_atual); }
       } else render(r.perguntas);
+      document.body.classList.remove("carregando");
     } catch { $("p-offline").classList.remove("oculto"); }
   }
   window.addEventListener("resize", () => { if (modoTela === "slides") desenhar(paginaDesenhada || 1, true); atualizar(); });
@@ -431,6 +440,7 @@
 
   atualizar();
   redeoneAoVivo(atualizar, 1500);
+  setTimeout(() => document.body.classList.remove("carregando"), 8000);   // sem internet: libera mesmo assim
 })();
 </script>
 </body>
