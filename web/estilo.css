@@ -1,0 +1,64 @@
+:root {
+  /* identidade da Conferência Rede One (banner): azul royal, dourado e branco */
+  --fundo: #061a63;
+  --fundo-2: #0b2a8c;
+  --cartao: rgba(255, 255, 255, 0.09);
+  --cartao-forte: rgba(255, 255, 255, 0.16);
+  --borda: rgba(255, 255, 255, 0.18);
+  --texto: #ffffff;
+  --texto-2: rgba(255, 255, 255, 0.78);
+  --texto-3: rgba(255, 255, 255, 0.55);
+  --destaque: #f5c842;
+  --destaque-2: #e8a91c;
+  --roxo: #2f6bff;
+  --verde: #2fd38a;
+  --vermelho: #ff5c7a;
+  --raio: 18px;
+  --sombra: 0 18px 50px rgba(0, 0, 0, 0.35);
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; min-height: 100%; }
+body {
+  font-family: "Outfit", system-ui, -apple-system, "Segoe UI", sans-serif;
+  color: var(--texto);
+  background: var(--fundo);
+  background-image:
+    radial-gradient(1200px 600px at 10% -10%, rgba(47, 107, 255, 0.55), transparent 60%),
+    radial-gradient(900px 500px at 110% 110%, rgba(64, 160, 255, 0.35), transparent 60%);
+  background-attachment: fixed;
+}
+button { font: inherit; cursor: pointer; }
+input, textarea { font: inherit; color: inherit; }
+.marca {
+  font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase;
+  background: linear-gradient(90deg, var(--destaque), var(--destaque-2));
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  border: 0; border-radius: 14px; padding: 14px 18px; font-weight: 700; font-size: 17px;
+  color: #061a63; background: linear-gradient(90deg, var(--destaque), var(--destaque-2));
+  box-shadow: 0 10px 30px rgba(245, 200, 66, 0.35); transition: transform .12s, opacity .2s;
+}
+.btn:active { transform: scale(0.97); }
+.btn[disabled] { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
+.btn.sec { background: var(--cartao-forte); color: var(--texto); box-shadow: none; border: 1px solid var(--borda); }
+.oculto { display: none !important; }
+.spinner {
+  width: 18px; height: 18px; border-radius: 50%;
+  border: 3px solid rgba(0,0,0,.2); border-top-color: currentColor; animation: gira .8s linear infinite;
+}
+@keyframes gira { to { transform: rotate(360deg); } }
+.aviso {
+  border-radius: 14px; padding: 12px 14px; font-size: 15px; line-height: 1.35;
+  background: rgba(255, 92, 122, 0.14); border: 1px solid rgba(255, 92, 122, 0.45);
+}
+.aviso.ok { background: rgba(47, 211, 138, 0.14); border-color: rgba(47, 211, 138, 0.45); }
+.toast {
+  position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%) translateY(120px);
+  background: #1d2354; border: 1px solid var(--borda); color: var(--texto);
+  padding: 12px 16px; border-radius: 14px; display: flex; gap: 14px; align-items: center;
+  box-shadow: var(--sombra); transition: transform .25s; z-index: 50; max-width: calc(100vw - 32px);
+}
+.toast.vis { transform: translateX(-50%) translateY(0); }
+.toast button { background: none; border: 0; color: var(--destaque); font-weight: 700; }

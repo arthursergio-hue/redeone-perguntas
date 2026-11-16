@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rede One · Telão</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="estilo.css">
+<style>
+  html, body { height: 100%; overflow: hidden; }
+  body { cursor: default; }
+  body.sem-cursor { cursor: none; }
+  #banner {
+    position: fixed; inset: 0; background-size: cover; background-position: center; z-index: 0;
+  }
+  #banner.padrao {
+    background:
+      radial-gradient(60vw 60vh at 15% 20%, rgba(47, 107, 255, .55), transparent 60%),
+      radial-gradient(50vw 50vh at 90% 85%, rgba(64, 160, 255, .45), transparent 60%),
+      radial-gradient(40vw 40vh at 80% 10%, rgba(245, 200, 66, .18), transparent 60%),
+      linear-gradient(160deg, #061a63, #0b2f9e 55%, #061a63);
+  }
+  #banner::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(4, 16, 64, .82), rgba(4, 16, 64, .45) 70%, rgba(4, 16, 64, .6)); }
+  .palco { position: relative; z-index: 1; height: 100vh; display: grid; grid-template-columns: 1fr minmax(260px, 22vw); gap: 3vw; padding: 4.5vh 3.5vw; }
+  .esq { display: flex; flex-direction: column; min-height: 0; }
+  .topo { display: flex; align-items: baseline; gap: 1.4vw; margin-bottom: 3vh; }
+  .topo .marca { font-size: clamp(32px, 4.6vw, 96px); line-height: 1; }
+  .topo .sub { font-size: clamp(16px, 1.6vw, 34px); color: var(--texto-2); font-weight: 600; }
+  .lista { position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 2vh; overflow: hidden; }
+  .card {
+    background: rgba(255, 255, 255, .1); border: 1px solid rgba(255, 255, 255, .18);
+    border-radius: 2vh; padding: 2.4vh 2vw; backdrop-filter: blur(14px); box-shadow: var(--sombra);
+    animation: entra .7s cubic-bezier(.2, .9, .25, 1.1) both; transition: opacity .5s, transform .5s;
+  }
+  .card { flex: 0 0 auto; }
+  .card .txt { font-size: clamp(18px, 2.2vw, 46px); font-weight: 600; line-height: 1.25; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+  .card .quem { margin-top: 1vh; font-size: clamp(13px, 1.25vw, 26px); color: var(--destaque); font-weight: 700; }
+  .card.fixa {
+    background: linear-gradient(135deg, rgba(245, 200, 66, .22), rgba(245, 200, 66, .1));
+    border: 2px solid rgba(245, 200, 66, .85); padding: 3.6vh 2.6vw;
+  }
+  .card.fixa .txt { font-size: clamp(24px, 3.4vw, 72px); font-weight: 700; }
+  .card.fixa .selo { display: inline-flex; align-items: center; gap: .5vw; font-size: clamp(12px, 1.1vw, 22px); font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: #061a63; background: var(--destaque); padding: .5vh .9vw; border-radius: 99px; margin-bottom: 1.6vh; }
+  .card.sai { opacity: 0; transform: translateX(-4vw) scale(.97); }
+  @keyframes entra { from { opacity: 0; transform: translateY(4vh) scale(.97); } to { opacity: 1; transform: none; } }
+  .vazio { margin: auto 0; max-width: 46vw; }
+  .vazio h2 { font-size: clamp(24px, 3.2vw, 66px); margin: 0 0 1.5vh; line-height: 1.1; }
+  .vazio p { font-size: clamp(16px, 1.6vw, 34px); color: var(--texto-2); margin: 0; }
+  .dir { display: flex; flex-direction: column; justify-content: flex-end; align-items: stretch; }
+  .qr-card { background: #fff; color: #11143a; border-radius: 2.4vh; padding: 2.4vh 1.4vw; text-align: center; box-shadow: var(--sombra); }
+  .qr-card .chamada { font-weight: 800; font-size: clamp(15px, 1.5vw, 32px); line-height: 1.15; margin-bottom: 1.4vh; }
+  #qr { width: 100%; aspect-ratio: 1; display: grid; place-items: center; }
+  #qr svg, #qr img { width: 100%; height: 100%; }
+  .qr-card .url { margin-top: 1.2vh; font-size: clamp(11px, .95vw, 20px); font-weight: 600; color: #4b4f7a; word-break: break-all; }
+  .estado { position: fixed; top: 1.6vh; right: 1.4vw; z-index: 3; display: flex; gap: 10px; }
+  .pill { font-size: clamp(11px, .9vw, 18px); font-weight: 700; padding: .6vh .9vw; border-radius: 99px; background: rgba(0, 0, 0, .45); border: 1px solid var(--borda); }
+  .pill.vermelho { background: rgba(255, 92, 122, .3); border-color: rgba(255, 92, 122, .7); }
+  #tela-cheia { position: fixed; left: 1.4vw; bottom: 1.6vh; z-index: 3; transition: opacity .4s; padding: 10px 14px; font-size: 15px; }
+  body.sem-cursor #tela-cheia { opacity: 0; pointer-events: none; }
+  .mais { font-size: clamp(13px, 1.2vw, 24px); color: var(--texto-3); font-weight: 600; margin-top: 1vh; }
+  @media (max-width: 760px) {
+    html, body { overflow: auto; }
+    .palco { grid-template-columns: 1fr; height: auto; min-height: 100vh; padding: 20px 16px; }
+    .vazio { max-width: none; }
+    .dir { max-width: 260px; }
+  }
+</style>
+</head>
+<body>
+<div id="banner" class="padrao"></div>
+<div class="estado"><span class="pill oculto" id="p-fechado">⏸️ Envio pausado</span><span class="pill vermelho oculto" id="p-offline">Sem conexão · tentando de novo</span></div>
+<div class="palco">
+  <section class="esq">
+    <div class="topo"><div class="marca" id="titulo">Rede One</div><div class="sub" id="subtitulo">Mande sua pergunta</div></div>
+    <div class="lista" id="lista"></div>
+  </section>
+  <aside class="dir">
+    <div class="qr-card">
+      <div class="chamada">📱 Aponte a câmera<br>e mande sua pergunta</div>
+      <div id="qr"></div>
+      <div class="url" id="url"></div>
+    </div>
+  </aside>
+</div>
+<button class="btn sec" id="tela-cheia">⛶ Tela cheia (F)</button>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script>
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const MAX = 5;
+  const params = new URLSearchParams(location.search);
+
+  // QR Code para a tela Perguntar (mesmo endereço do telão; ?link= troca, útil no teste local)
+  const destino = params.get("link") || new URL("perguntar.html" + (REDEONE.evento !== "rede-one-2026" ? `?evento=${encodeURIComponent(REDEONE.evento)}` : ""), location.href).href;
+  try {
+    const q = qrcode(0, "M"); q.addData(destino); q.make();
+    $("qr").innerHTML = q.createSvgTag({ cellSize: 8, margin: 0, scalable: true });
+  } catch { $("qr").textContent = "QR indisponível"; }
+  $("url").textContent = destino.replace(/^https?:\/\//, "");
+
+  let atual = new Map();
+  function render(perguntas) {
+    const lista = $("lista");
+    const fixa = perguntas.find((p) => p.fixada);
+    const outras = perguntas.filter((p) => !p.fixada);
+    const mostrar = (fixa ? [fixa] : []).concat(outras.slice(0, fixa ? MAX - 2 : MAX));
+    const extra = perguntas.length - mostrar.length;
+    const ids = new Set(mostrar.map((p) => p.id + (p.fixada ? ":f" : "")));
+
+    for (const [id, el] of atual) {
+      if (!ids.has(id)) { el.classList.add("sai"); setTimeout(() => el.remove(), 500); atual.delete(id); }
+    }
+    lista.querySelector(".vazio")?.remove();
+    lista.querySelector(".mais")?.remove();
+
+    mostrar.forEach((p, i) => {
+      const chave = p.id + (p.fixada ? ":f" : "");
+      let el = atual.get(chave);
+      if (!el) {
+        el = document.createElement("article");
+        el.className = "card" + (p.fixada ? " fixa" : "");
+        if (p.fixada) { const s = document.createElement("div"); s.className = "selo"; s.textContent = "📌 Em destaque"; el.appendChild(s); }
+        const t = document.createElement("div"); t.className = "txt"; t.textContent = p.texto; el.appendChild(t);
+        const q = document.createElement("div"); q.className = "quem"; q.textContent = p.nome ? p.nome : "Anônimo"; el.appendChild(q);
+        atual.set(chave, el);
+      }
+      const ref = lista.children[i];
+      if (ref !== el) lista.insertBefore(el, ref || null);
+    });
+
+    if (!mostrar.length) {
+      const v = document.createElement("div"); v.className = "vazio";
+      v.innerHTML = "<h2>Tem uma pergunta?</h2><p>Aponte a câmera do celular para o QR Code e mande. Pode ser anônima.</p>";
+      lista.appendChild(v);
+      return;
+    }
+    // Só mostra os cartões que cabem inteiros na tela do projetor; o resto vira "+N na fila"
+    const m = document.createElement("div"); m.className = "mais"; lista.appendChild(m);
+    const cards = [...lista.querySelectorAll(".card:not(.sai)")];
+    cards.forEach((c) => c.classList.remove("oculto"));
+    let escondidos = 0;
+    const cabe = () => lista.scrollHeight <= lista.clientHeight + 1;
+    m.textContent = "+ 0 na fila";
+    for (let i = cards.length - 1; i > 0 && !cabe(); i--) { cards[i].classList.add("oculto"); escondidos++; }
+    const fila = extra + escondidos;
+    if (fila > 0) m.textContent = `+ ${fila} na fila`; else m.remove();
+  }
+  window.addEventListener("resize", () => atualizar());
+
+  let ultimoBanner = null;
+  async function atualizar() {
+    try {
+      const r = await redeoneApi("telao");
+      $("p-offline").classList.add("oculto");
+      if (!r.ok) return;
+      $("titulo").textContent = r.evento.titulo; $("subtitulo").textContent = r.evento.subtitulo;
+      $("p-fechado").classList.toggle("oculto", r.evento.aberto);
+      const banner = params.get("banner") || r.evento.banner_url || null;
+      if (banner !== ultimoBanner) {
+        ultimoBanner = banner;
+        $("banner").classList.toggle("padrao", !banner);
+        $("banner").style.backgroundImage = banner ? `url("${banner.replace(/"/g, "")}")` : "";
+      }
+      render(r.perguntas);
+    } catch { $("p-offline").classList.remove("oculto"); }
+  }
+
+  // Tela cheia e cursor que some
+  const cheia = () => document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen?.();
+  $("tela-cheia").onclick = cheia;
+  document.addEventListener("keydown", (e) => { if (e.key === "f" || e.key === "F") cheia(); });
+  let tCursor;
+  const mexeu = () => { document.body.classList.remove("sem-cursor"); clearTimeout(tCursor); tCursor = setTimeout(() => document.body.classList.add("sem-cursor"), 3000); };
+  document.addEventListener("mousemove", mexeu); mexeu();
+
+  atualizar();
+  redeoneAoVivo(atualizar, 2500);
+})();
+</script>
+</body>
+</html>

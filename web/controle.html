@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#061a63">
+<meta name="robots" content="noindex">
+<title>Rede One · Controle</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="estilo.css">
+<style>
+  main { max-width: 640px; margin: 0 auto; padding: 18px 16px 90px; }
+  .pin { min-height: 92dvh; display: flex; flex-direction: column; justify-content: center; text-align: center; }
+  .pin .marca { font-size: 34px; }
+  .pin p { color: var(--texto-2); margin: 6px 0 24px; }
+  .pin input { width: 100%; max-width: 260px; margin: 0 auto 14px; text-align: center; letter-spacing: .5em; font-size: 30px; font-weight: 700; padding: 14px; border-radius: 16px; background: rgba(0,0,0,.25); border: 1px solid var(--borda); outline: none; }
+  .pin input:focus { border-color: var(--destaque); }
+  .pin .btn { width: 100%; max-width: 260px; margin: 0 auto; }
+  .pin .lembrar { margin: 14px auto 0; font-size: 14px; color: var(--texto-2); display: flex; gap: 8px; align-items: center; }
+  .pin .aviso { max-width: 300px; margin: 14px auto 0; }
+
+  .cab { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
+  .cab .marca { font-size: 24px; }
+  .cab .menu { display: flex; gap: 8px; }
+  .icone-btn { width: 42px; height: 42px; border-radius: 12px; border: 1px solid var(--borda); background: var(--cartao); color: var(--texto); font-size: 19px; display: grid; place-items: center; }
+  .chaves { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+  .chave { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 14px; border-radius: 14px; background: var(--cartao); border: 1px solid var(--borda); font-size: 14px; font-weight: 600; line-height: 1.2; }
+  .sw { position: relative; flex: 0 0 auto; width: 50px; height: 30px; border-radius: 99px; background: rgba(255,255,255,.2); border: 0; transition: background .2s; }
+  .sw::after { content: ""; position: absolute; top: 3px; left: 3px; width: 24px; height: 24px; border-radius: 50%; background: #fff; transition: transform .2s; }
+  .sw.on { background: var(--verde); }
+  .sw.on::after { transform: translateX(20px); }
+  .abas { position: sticky; top: 0; z-index: 5; display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; padding: 8px 0; background: linear-gradient(var(--fundo) 80%, transparent); }
+  .aba { border: 1px solid var(--borda); background: var(--cartao); color: var(--texto-2); border-radius: 12px; padding: 10px 4px; font-size: 13px; font-weight: 700; }
+  .aba.ativa { background: var(--texto); color: #11143a; }
+  .aba .n { display: inline-block; min-width: 20px; padding: 1px 6px; margin-left: 4px; border-radius: 99px; background: rgba(0,0,0,.25); font-size: 12px; }
+  .aba.ativa .n { background: #11143a; color: #fff; }
+  .aba.alerta .n { background: var(--destaque-2); color: #1b1030; }
+  .item { background: var(--cartao); border: 1px solid var(--borda); border-radius: 16px; padding: 14px; margin-top: 10px; animation: entra .3s both; }
+  .item.fixa { border-color: rgba(255, 201, 77, .8); background: rgba(255, 201, 77, .1); }
+  .item .txt { font-size: 18px; line-height: 1.35; font-weight: 600; word-wrap: break-word; }
+  .item .meta { margin-top: 6px; font-size: 13px; color: var(--texto-3); display: flex; gap: 10px; flex-wrap: wrap; }
+  .item .meta b { color: var(--destaque); font-weight: 700; }
+  .item .botoes { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+  .item .botoes button { flex: 1 1 auto; min-width: 0; border: 1px solid var(--borda); background: var(--cartao-forte); color: var(--texto); border-radius: 12px; padding: 11px 8px; font-weight: 700; font-size: 14px; }
+  .item .botoes .ok { background: var(--verde); color: #06291a; border: 0; }
+  .item .botoes .fx { background: var(--destaque); color: #1b1030; border: 0; }
+  .item .botoes button[disabled] { opacity: .5; }
+  @keyframes entra { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  .vazio { text-align: center; color: var(--texto-3); padding: 40px 10px; font-size: 16px; }
+  .rodape { display: flex; gap: 10px; margin-top: 18px; }
+  .rodape .btn { flex: 1; font-size: 15px; padding: 12px; }
+  .estado-con { font-size: 12px; color: var(--texto-3); text-align: center; margin-top: 10px; }
+  .estado-con.erro { color: var(--vermelho); }
+  dialog { border: 1px solid var(--borda); border-radius: 20px; background: #141a45; color: var(--texto); width: min(520px, calc(100vw - 32px)); padding: 20px; box-shadow: var(--sombra); }
+  dialog::backdrop { background: rgba(0,0,0,.6); }
+  dialog h3 { margin: 0 0 14px; }
+  dialog label { display: block; font-size: 13px; color: var(--texto-2); margin: 12px 0 6px; font-weight: 600; }
+  dialog input { width: 100%; border-radius: 12px; padding: 12px; background: rgba(0,0,0,.25); border: 1px solid var(--borda); outline: none; font-size: 16px; }
+  dialog .linha { display: flex; gap: 10px; margin-top: 18px; }
+  dialog .linha .btn { flex: 1; font-size: 15px; padding: 12px; }
+  .links a { display: block; color: var(--destaque); margin: 6px 0; font-size: 14px; word-break: break-all; }
+</style>
+</head>
+<body>
+<main>
+  <section class="pin" id="tela-pin">
+    <div class="marca">Rede One</div>
+    <p>Controle das perguntas · digite o PIN</p>
+    <input id="pin" type="password" inputmode="numeric" autocomplete="current-password" maxlength="12" placeholder="••••••">
+    <button class="btn" id="entrar">Entrar</button>
+    <label class="lembrar"><input type="checkbox" id="lembrar" checked> Lembrar neste aparelho</label>
+    <div class="aviso oculto" id="pin-erro" role="alert"></div>
+  </section>
+
+  <section class="oculto" id="painel">
+    <div class="cab">
+      <div class="marca" id="titulo">Rede One</div>
+      <div class="menu">
+        <button class="icone-btn" id="abrir-telao" title="Abrir telão">🖥️</button>
+        <button class="icone-btn" id="abrir-ajustes" title="Ajustes">⚙️</button>
+      </div>
+    </div>
+
+    <div class="chaves">
+      <div class="chave"><span>Aprovar antes de aparecer</span><button class="sw" id="sw-aprovar" aria-label="Aprovar antes de aparecer"></button></div>
+      <div class="chave"><span>Receber perguntas</span><button class="sw" id="sw-aberto" aria-label="Receber perguntas"></button></div>
+    </div>
+
+    <nav class="abas" id="abas">
+      <button class="aba ativa" data-aba="pendente">Novas<span class="n" id="n-pendente">0</span></button>
+      <button class="aba" data-aba="aprovada">No telão<span class="n" id="n-aprovada">0</span></button>
+      <button class="aba" data-aba="respondida">Respondidas<span class="n" id="n-respondida">0</span></button>
+      <button class="aba" data-aba="oculta">Ocultas<span class="n" id="n-oculta">0</span></button>
+    </nav>
+    <div id="lista"></div>
+
+    <div class="rodape">
+      <button class="btn sec" id="csv">⬇️ Exportar CSV</button>
+      <button class="btn sec" id="sair">Sair</button>
+    </div>
+    <div class="estado-con" id="estado-con">Ao vivo</div>
+  </section>
+</main>
+
+<dialog id="ajustes">
+  <h3>⚙️ Ajustes do evento</h3>
+  <label for="a-titulo">Título</label><input id="a-titulo" maxlength="80">
+  <label for="a-sub">Frase do topo</label><input id="a-sub" maxlength="120">
+  <label for="a-banner">Endereço da imagem do banner (deixe vazio para o fundo padrão)</label><input id="a-banner" maxlength="500" placeholder="https://…/banner.jpg">
+  <label for="a-pin">Novo PIN (opcional, 4 a 12 dígitos)</label><input id="a-pin" inputmode="numeric" maxlength="12">
+  <label>Links</label>
+  <div class="links" id="links"></div>
+  <div class="linha"><button class="btn sec" id="a-cancelar">Cancelar</button><button class="btn" id="a-salvar">Salvar</button></div>
+</dialog>
+
+<div class="toast" id="toast"><span id="toast-msg"></span><button id="toast-desfazer">Desfazer</button></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script>
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const ler = (k) => { try { return localStorage.getItem(k) ?? sessionStorage.getItem(k); } catch { return null; } };
+  const gravar = (k, v, longo) => { try { (longo ? localStorage : sessionStorage).setItem(k, v); } catch {} };
+  const apagar = (k) => { try { localStorage.removeItem(k); sessionStorage.removeItem(k); } catch {} };
+  const CHAVE = `redeone.pin.${REDEONE.evento}`;
+
+  let pin = ler(CHAVE);
+  let dados = { evento: {}, perguntas: [] };
+  let aba = "pendente";
+  let vistos = null;
+
+  const ERROS = { pin: "PIN errado.", bloqueado: "Muitas tentativas. Espere 10 minutos.", servidor: "Erro no servidor. Tente de novo." };
+
+  async function chamar(op, extra = {}) {
+    const r = await redeoneApi(op, { pin, ...extra });
+    if (!r.ok && r.erro === "pin") { sair("O PIN mudou ou expirou. Entre de novo."); throw new Error("pin"); }
+    if (!r.ok) throw new Error(r.erro || "servidor");
+    $("estado-con").textContent = "Ao vivo · atualizado " + new Date().toLocaleTimeString("pt-BR");
+    $("estado-con").classList.remove("erro");
+    dados = r; render(); return r;
+  }
+
+  async function entrar() {
+    const v = $("pin").value.trim();
+    if (!v) return;
+    $("entrar").disabled = true; $("entrar").innerHTML = '<span class="spinner"></span>';
+    $("pin-erro").classList.add("oculto");
+    try {
+      const r = await redeoneApi("entrar", { pin: v });
+      if (!r.ok) throw new Error(r.erro);
+      pin = v; gravar(CHAVE, v, $("lembrar").checked);
+      dados = r; mostrarPainel();
+    } catch (e) {
+      $("pin-erro").textContent = ERROS[e.message] || "Sem conexão. Confira a internet.";
+      $("pin-erro").classList.remove("oculto");
+    } finally { $("entrar").disabled = false; $("entrar").textContent = "Entrar"; }
+  }
+  $("entrar").onclick = entrar;
+  $("pin").addEventListener("keydown", (e) => { if (e.key === "Enter") entrar(); });
+
+  function sair(msg) {
+    pin = null; apagar(CHAVE);
+    $("painel").classList.add("oculto"); $("tela-pin").classList.remove("oculto");
+    $("pin").value = "";
+    if (msg) { $("pin-erro").textContent = msg; $("pin-erro").classList.remove("oculto"); }
+  }
+  $("sair").onclick = () => sair();
+
+  let aoVivoLigado = false;
+  function mostrarPainel() {
+    $("tela-pin").classList.add("oculto"); $("painel").classList.remove("oculto");
+    render();
+    if (!aoVivoLigado) { aoVivoLigado = true; redeoneAoVivo(() => pin && atualizar(), 2500); }
+  }
+  async function atualizar() {
+    try { await chamar("listar"); }
+    catch (e) { if (e.message !== "pin") { $("estado-con").textContent = "Sem conexão · tentando de novo…"; $("estado-con").classList.add("erro"); } }
+  }
+
+  const ha = (iso) => {
+    const s = Math.max(0, (Date.now() - new Date(iso)) / 1000);
+    if (s < 60) return "agora"; if (s < 3600) return `há ${Math.floor(s / 60)} min`;
+    return new Date(iso).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+  };
+
+  const BOTOES = {
+    pendente: [["aprovar", "👍 Aprovar", "ok"], ["fixar", "📌 Fixar", "fx"], ["ocultar", "🙈 Ocultar", ""]],
+    aprovada: [["responder", "✅ Respondida", "ok"], ["fixar", "📌 Fixar", "fx"], ["ocultar", "🙈 Ocultar", ""]],
+    respondida: [["aprovar", "↩️ Voltar ao telão", ""]],
+    oculta: [["aprovar", "↩️ Mostrar no telão", ""], ["pendente", "📥 Voltar às novas", ""]],
+  };
+  const NOME_ACAO = { aprovar: "Aprovada · já está no telão", responder: "Marcada como respondida", ocultar: "Ocultada", fixar: "Fixada em destaque", desafixar: "Destaque removido", pendente: "Voltou para as novas" };
+
+  function render() {
+    const ev = dados.evento || {};
+    $("titulo").textContent = ev.titulo || "Rede One";
+    $("sw-aprovar").classList.toggle("on", !!ev.aprovar_antes);
+    $("sw-aberto").classList.toggle("on", !!ev.aberto);
+    const cont = { pendente: 0, aprovada: 0, respondida: 0, oculta: 0 };
+    dados.perguntas.forEach((p) => cont[p.status]++);
+    for (const k in cont) $(`n-${k}`).textContent = cont[k];
+    document.querySelector('[data-aba="pendente"]').classList.toggle("alerta", cont.pendente > 0);
+    document.title = cont.pendente ? `(${cont.pendente}) Rede One · Controle` : "Rede One · Controle";
+
+    // vibra quando chega pergunta nova
+    const idsPend = new Set(dados.perguntas.filter((p) => p.status === "pendente").map((p) => p.id));
+    if (vistos && [...idsPend].some((id) => !vistos.has(id))) navigator.vibrate?.(120);
+    vistos = idsPend;
+
+    let itens = dados.perguntas.filter((p) => p.status === aba);
+    if (aba === "pendente") itens = itens.slice().reverse();               // mais antiga primeiro
+    if (aba === "aprovada") itens.sort((a, b) => (b.fixada - a.fixada) || (new Date(b.aprovada_em) - new Date(a.aprovada_em)));
+    const lista = $("lista"); lista.innerHTML = "";
+    if (!itens.length) {
+      const v = document.createElement("div"); v.className = "vazio";
+      v.textContent = { pendente: "Nenhuma pergunta nova. 🙌", aprovada: "Nada no telão agora.", respondida: "Nenhuma respondida ainda.", oculta: "Nenhuma oculta." }[aba];
+      lista.appendChild(v); return;
+    }
+    for (const p of itens) {
+      const el = document.createElement("article"); el.className = "item" + (p.fixada ? " fixa" : "");
+      const t = document.createElement("div"); t.className = "txt"; t.textContent = p.texto; el.appendChild(t);
+      const m = document.createElement("div"); m.className = "meta";
+      const quem = document.createElement("b"); quem.textContent = p.nome || "Anônimo"; m.appendChild(quem);
+      const q = document.createElement("span"); q.textContent = ha(p.criada_em); m.appendChild(q);
+      if (p.fixada) { const f = document.createElement("span"); f.textContent = "📌 em destaque"; m.appendChild(f); }
+      el.appendChild(m);
+      const bs = document.createElement("div"); bs.className = "botoes";
+      for (const [acao, rotulo, cls] of BOTOES[p.status]) {
+        const a = acao === "fixar" && p.fixada ? "desafixar" : acao;
+        const b = document.createElement("button"); b.className = cls;
+        b.textContent = a === "desafixar" ? "📌 Tirar destaque" : rotulo;
+        b.onclick = () => agir(p, a, b);
+        bs.appendChild(b);
+      }
+      el.appendChild(bs); lista.appendChild(el);
+    }
+  }
+
+  document.querySelectorAll(".aba").forEach((b) => b.onclick = () => {
+    aba = b.dataset.aba;
+    document.querySelectorAll(".aba").forEach((x) => x.classList.toggle("ativa", x === b));
+    render();
+  });
+
+  // Desfazer: guarda o estado anterior e devolve com a ação que leva até ele
+  let tToast;
+  function toast(msg, desfazer) {
+    $("toast-msg").textContent = msg;
+    $("toast-desfazer").classList.toggle("oculto", !desfazer);
+    $("toast-desfazer").onclick = async () => { $("toast").classList.remove("vis"); await desfazer(); };
+    $("toast").classList.add("vis"); clearTimeout(tToast);
+    tToast = setTimeout(() => $("toast").classList.remove("vis"), 5000);
+  }
+  const voltarPara = { pendente: "pendente", aprovada: "aprovar", respondida: "responder", oculta: "ocultar" };
+  async function agir(p, acao, botao) {
+    const antes = { status: p.status, fixada: p.fixada };
+    const fixadaAntes = dados.perguntas.find((x) => x.fixada && x.id !== p.id);
+    botao.disabled = true;
+    try {
+      await chamar("agir", { id: p.id, acao });
+      toast(NOME_ACAO[acao], async () => {
+        try {
+          await chamar("agir", { id: p.id, acao: voltarPara[antes.status] });
+          if (antes.fixada) await chamar("agir", { id: p.id, acao: "fixar" });
+          if (acao === "fixar" && fixadaAntes) await chamar("agir", { id: fixadaAntes.id, acao: "fixar" });
+          else if (acao === "fixar" && !antes.fixada) await chamar("agir", { id: p.id, acao: "desafixar" });
+        } catch { toast("Não deu para desfazer. Tente de novo."); }
+      });
+    } catch (e) { if (e.message !== "pin") { botao.disabled = false; toast("Não deu certo. Confira a conexão."); } }
+  }
+
+  async function config(cfg) {
+    try { await chamar("config", { cfg }); } catch (e) { if (e.message !== "pin") toast("Não salvou. Confira a conexão."); }
+  }
+  $("sw-aprovar").onclick = () => config({ aprovar_antes: !dados.evento.aprovar_antes });
+  $("sw-aberto").onclick = () => config({ aberto: !dados.evento.aberto });
+
+  const urlDe = (pag) => new URL(pag + (REDEONE.evento !== "rede-one-2026" ? `?evento=${encodeURIComponent(REDEONE.evento)}` : ""), location.href).href;
+  $("abrir-telao").onclick = () => window.open(urlDe("telao.html"), "_blank");
+  $("abrir-ajustes").onclick = () => {
+    const ev = dados.evento;
+    $("a-titulo").value = ev.titulo || ""; $("a-sub").value = ev.subtitulo || ""; $("a-banner").value = ev.banner_url || ""; $("a-pin").value = "";
+    $("links").innerHTML = "";
+    for (const [r, pag] of [["Perguntar (QR Code)", "perguntar.html"], ["Telão", "telao.html"]]) {
+      const a = document.createElement("a"); a.href = urlDe(pag); a.target = "_blank"; a.textContent = `${r}: ${urlDe(pag)}`; $("links").appendChild(a);
+    }
+    $("ajustes").showModal();
+  };
+  $("a-cancelar").onclick = () => $("ajustes").close();
+  $("a-salvar").onclick = async () => {
+    const cfg = { titulo: $("a-titulo").value.trim(), subtitulo: $("a-sub").value.trim(), banner_url: $("a-banner").value.trim() };
+    const novo = $("a-pin").value.trim();
+    if (novo && !/^\d{4,12}$/.test(novo)) { toast("O PIN precisa ter de 4 a 12 números."); return; }
+    if (novo) cfg.novo_pin = novo;
+    await config(cfg);
+    if (novo) { pin = novo; gravar(CHAVE, novo, !!localStorage.getItem(CHAVE)); }
+    $("ajustes").close(); toast(novo ? "Ajustes e PIN salvos" : "Ajustes salvos");
+  };
+
+  $("csv").onclick = () => {
+    const esc = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+    const STATUS = { pendente: "Nova", aprovada: "No telão", respondida: "Respondida", oculta: "Oculta" };
+    const hora = (iso) => iso ? new Date(iso).toLocaleString("pt-BR") : "";
+    const linhas = [["Enviada em", "Pergunta", "Nome", "Situação", "Respondida em"].map(esc).join(";")];
+    dados.perguntas.slice().reverse().forEach((p) => linhas.push([hora(p.criada_em), p.texto, p.nome || "Anônimo", STATUS[p.status], hora(p.respondida_em)].map(esc).join(";")));
+    const blob = new Blob(["﻿" + linhas.join("\r\n")], { type: "text/csv;charset=utf-8" });
+    const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
+    a.download = `perguntas-${REDEONE.evento}-${new Date().toISOString().slice(0, 10)}.csv`; a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  };
+
+  setInterval(() => pin && render(), 30000); // atualiza o "há X min"
+  if (pin) { $("tela-pin").classList.add("oculto"); atualizar().then(() => pin && mostrarPainel()); }
+  else $("pin").focus();
+})();
+</script>
+</body>
+</html>

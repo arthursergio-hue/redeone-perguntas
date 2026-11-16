@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "redeone-local",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["dev/servidor.mjs"],
+      "port": 5174
+    }
+  ]
+}

@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#061a63">
+<title>Rede One · Perguntas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="estilo.css">
+<style>
+  main { max-width: 520px; margin: 0 auto; padding: 28px 16px 40px; min-height: 100dvh; display: flex; flex-direction: column; }
+  header { text-align: center; margin-bottom: 22px; }
+  header .marca { font-size: 34px; }
+  header p { margin: 6px 0 0; color: var(--texto-2); font-size: 17px; }
+  .painel { background: var(--cartao); border: 1px solid var(--borda); border-radius: var(--raio); padding: 18px; box-shadow: var(--sombra); backdrop-filter: blur(8px); }
+  label.titulo { display: block; font-weight: 700; font-size: 16px; margin-bottom: 8px; }
+  textarea {
+    width: 100%; min-height: 140px; resize: vertical; border-radius: 14px; padding: 14px;
+    background: rgba(0,0,0,.25); border: 1px solid var(--borda); font-size: 18px; line-height: 1.4; outline: none;
+  }
+  textarea:focus, input[type=text]:focus { border-color: var(--destaque); }
+  .contador { text-align: right; font-size: 13px; color: var(--texto-3); margin-top: 6px; }
+  .contador.alto { color: var(--destaque-2); }
+  .seg { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 5px; border-radius: 14px; background: rgba(0,0,0,.25); border: 1px solid var(--borda); margin: 16px 0 12px; }
+  .seg button { border: 0; border-radius: 10px; padding: 11px 8px; background: transparent; color: var(--texto-2); font-weight: 600; font-size: 15px; }
+  .seg button.ativo { background: var(--cartao-forte); color: var(--texto); box-shadow: inset 0 0 0 1px var(--borda); }
+  input[type=text] { width: 100%; border-radius: 14px; padding: 13px 14px; background: rgba(0,0,0,.25); border: 1px solid var(--borda); font-size: 17px; outline: none; }
+  .dica { font-size: 13px; color: var(--texto-3); margin: 8px 2px 0; }
+  .acoes { margin-top: 18px; }
+  .acoes .btn { width: 100%; padding: 16px; }
+  #erro { margin-top: 14px; }
+  .tela-fim { text-align: center; padding: 30px 18px; }
+  .tela-fim .icone { font-size: 64px; line-height: 1; }
+  .tela-fim h2 { margin: 14px 0 6px; font-size: 26px; }
+  .tela-fim p { color: var(--texto-2); font-size: 17px; margin: 0 0 22px; line-height: 1.4; }
+  .resumo { text-align: left; background: rgba(0,0,0,.25); border-radius: 14px; padding: 14px; margin: 0 0 20px; font-size: 16px; line-height: 1.4; border: 1px solid var(--borda); }
+  .resumo small { display: block; color: var(--texto-3); margin-top: 6px; }
+  footer { margin-top: auto; padding-top: 24px; text-align: center; color: var(--texto-3); font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div class="marca" id="titulo">Rede One</div>
+    <p id="subtitulo">Mande sua pergunta</p>
+  </header>
+
+  <section class="painel" id="form">
+    <label class="titulo" for="texto">Sua pergunta</label>
+    <textarea id="texto" maxlength="280" placeholder="Escreva aqui a sua pergunta…" enterkeyhint="send"></textarea>
+    <div class="contador" id="contador">0 / 280</div>
+
+    <div class="seg" role="tablist" aria-label="Como enviar">
+      <button type="button" id="b-anonimo" class="ativo" aria-pressed="true">🙈 Anônimo</button>
+      <button type="button" id="b-nome" aria-pressed="false">🙋 Com meu nome</button>
+    </div>
+    <div id="campo-nome" class="oculto">
+      <input type="text" id="nome" maxlength="60" placeholder="Seu nome" autocomplete="given-name">
+    </div>
+    <p class="dica" id="dica-modo">Seu nome não aparece. Ninguém fica sabendo quem mandou.</p>
+
+    <div class="acoes"><button class="btn" id="enviar" disabled>Enviar pergunta</button></div>
+    <div class="aviso oculto" id="erro" role="alert"></div>
+  </section>
+
+  <section class="painel tela-fim oculto" id="ok">
+    <div class="icone">🙌</div>
+    <h2>Pergunta enviada!</h2>
+    <p id="ok-msg">Ela vai para o telão assim que for aprovada.</p>
+    <div class="resumo" id="ok-resumo"></div>
+    <button class="btn sec" id="outra">Mandar outra pergunta</button>
+  </section>
+
+  <section class="painel tela-fim oculto" id="fechado">
+    <div class="icone">⏸️</div>
+    <h2>Perguntas encerradas</h2>
+    <p>O envio está pausado agora. Obrigado por participar!</p>
+    <button class="btn sec" id="tentar">Ver de novo</button>
+  </section>
+
+  <footer>Sem cadastro. Uma pergunta a cada 30 segundos.</footer>
+</main>
+<div class="toast" id="toast"></div>
+
+<script src="config.js"></script>
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const ler = (k) => { try { return localStorage.getItem(k); } catch { return null; } };
+  const gravar = (k, v) => { try { localStorage.setItem(k, v); } catch {} };
+
+  let dispositivo = ler("redeone.dispositivo");
+  if (!dispositivo || !/^[A-Za-z0-9-]{8,64}$/.test(dispositivo)) {
+    dispositivo = (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2, 12));
+    gravar("redeone.dispositivo", dispositivo);
+  }
+
+  let comNome = ler("redeone.modo") === "nome";
+  $("nome").value = ler("redeone.nome") || "";
+  let esperaAte = Number(ler("redeone.esperaAte") || 0);
+  let timerEspera = null;
+
+  function modo(nome) {
+    comNome = nome;
+    gravar("redeone.modo", nome ? "nome" : "anonimo");
+    $("b-anonimo").classList.toggle("ativo", !nome); $("b-anonimo").setAttribute("aria-pressed", !nome);
+    $("b-nome").classList.toggle("ativo", nome); $("b-nome").setAttribute("aria-pressed", nome);
+    $("campo-nome").classList.toggle("oculto", !nome);
+    $("dica-modo").textContent = nome ? "Seu nome aparece junto com a pergunta no telão." : "Seu nome não aparece. Ninguém fica sabendo quem mandou.";
+    if (nome) setTimeout(() => $("nome").focus(), 50);
+    validar();
+  }
+  $("b-anonimo").onclick = () => modo(false);
+  $("b-nome").onclick = () => modo(true);
+
+  function validar() {
+    const n = $("texto").value.trim().length;
+    $("contador").textContent = `${$("texto").value.length} / 280`;
+    $("contador").classList.toggle("alto", $("texto").value.length > 250);
+    const restante = Math.ceil((esperaAte - Date.now()) / 1000);
+    const nomeOk = !comNome || $("nome").value.trim().length > 0;
+    $("enviar").disabled = n < 3 || !nomeOk || restante > 0 || $("enviar").dataset.enviando === "1";
+    if (restante > 0 && $("enviar").dataset.enviando !== "1") $("enviar").textContent = `Aguarde ${restante}s para enviar`;
+    else if ($("enviar").dataset.enviando !== "1") $("enviar").textContent = "Enviar pergunta";
+  }
+  $("texto").addEventListener("input", () => { esconderErro(); validar(); });
+  $("nome").addEventListener("input", () => { gravar("redeone.nome", $("nome").value); validar(); });
+  $("texto").addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); if (!$("enviar").disabled) enviar(); } });
+
+  function contarEspera(seg) {
+    esperaAte = Date.now() + seg * 1000; gravar("redeone.esperaAte", String(esperaAte));
+    clearInterval(timerEspera);
+    timerEspera = setInterval(() => { validar(); if (Date.now() >= esperaAte) clearInterval(timerEspera); }, 500);
+    validar();
+  }
+  if (esperaAte > Date.now()) contarEspera(Math.ceil((esperaAte - Date.now()) / 1000));
+
+  function mostrarErro(msg) { $("erro").textContent = msg; $("erro").classList.remove("oculto"); }
+  function esconderErro() { $("erro").classList.add("oculto"); }
+
+  const MSG = {
+    palavrao: "Ops! Sua pergunta tem palavras que não podem ir para o telão. Pode reescrever?",
+    curta: "Escreva uma pergunta um pouco maior.",
+    longa: "A pergunta passou de 280 caracteres. Pode resumir?",
+    repetida: "Essa pergunta já foi enviada há pouco. 😉",
+    evento: "Não achamos este evento. Confira o QR Code.",
+    dispositivo: "Não conseguimos identificar o aparelho. Recarregue a página.",
+    servidor: "Deu um problema do nosso lado. Tente de novo em alguns segundos.",
+  };
+
+  function telas(qual) {
+    ["form", "ok", "fechado"].forEach((id) => $(id).classList.toggle("oculto", id !== qual));
+  }
+
+  async function enviar() {
+    esconderErro();
+    const b = $("enviar");
+    b.dataset.enviando = "1"; b.disabled = true; b.innerHTML = '<span class="spinner"></span> Enviando…';
+    const texto = $("texto").value.trim();
+    const nome = comNome ? $("nome").value.trim() : null;
+    try {
+      if (!navigator.onLine) throw new Error("offline");
+      const r = await redeoneApi("enviar", { texto, nome, dispositivo });
+      if (r.ok) {
+        contarEspera(30);
+        $("ok-msg").textContent = r.status === "aprovada" ? "Ela já está no telão. 🎉" : "Ela vai para o telão assim que for aprovada.";
+        $("ok-resumo").textContent = texto;
+        const s = document.createElement("small"); s.textContent = nome ? `— ${nome}` : "— Anônimo";
+        $("ok-resumo").appendChild(s);
+        $("texto").value = "";
+        telas("ok");
+      } else if (r.erro === "fechado") {
+        telas("fechado");
+      } else if (r.erro === "espera") {
+        contarEspera(r.espera_s || 30);
+        mostrarErro(`Calma! Você pode mandar outra pergunta em ${r.espera_s || 30} segundos.`);
+      } else {
+        mostrarErro(MSG[r.erro] || MSG.servidor);
+      }
+    } catch (e) {
+      mostrarErro(navigator.onLine ? "Não conseguimos enviar. Confira a internet e tente de novo." : "Você está sem internet. Conecte e tente de novo — sua pergunta continua aqui.");
+    } finally {
+      b.dataset.enviando = "0"; validar();
+    }
+  }
+  $("enviar").onclick = enviar;
+  $("outra").onclick = () => { telas("form"); validar(); $("texto").focus(); };
+  $("tentar").onclick = () => carregar();
+
+  async function carregar() {
+    try {
+      const r = await redeoneApi("telao");
+      if (r.ok) {
+        $("titulo").textContent = r.evento.titulo; $("subtitulo").textContent = r.evento.subtitulo;
+        document.title = `${r.evento.titulo} · Perguntas`;
+        if (!r.evento.aberto) telas("fechado"); else if (!$("fechado").classList.contains("oculto")) telas("form");
+      }
+    } catch { /* segue com o padrão */ }
+  }
+  modo(comNome);
+  carregar();
+})();
+</script>
+</body>
+</html>
