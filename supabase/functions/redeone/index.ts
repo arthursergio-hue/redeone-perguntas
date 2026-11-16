@@ -27,7 +27,7 @@ async function hashIp(req: Request): Promise<string | null> {
 const ACOES = new Set(["aprovar", "responder", "ocultar", "fixar", "desafixar", "pendente", "destacar",
   "tirar_destaque", "ocultar_resposta", "mostrar_resposta"]);
 const RODADA = new Set(["iniciar", "proxima", "anterior", "mais30", "pausar", "retomar", "zerar"]);
-const COM_PIN = new Set(["entrar", "listar", "agir", "config", "slide", "rodada", "mesas", "upload_url", "ativar"]);
+const COM_PIN = new Set(["entrar", "listar", "agir", "config", "slide", "rodada", "mesas", "upload_url", "ativar", "zerar"]);
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
@@ -90,8 +90,16 @@ Deno.serve(async (req) => {
       case "mesas":
         await sql`select redeone.controle_mesas(${evento}, ${sql.json(Array.isArray(b.mesas) ? b.mesas : [])})`;
         break;
+      case "zerar": {
+        const [z] = await sql`select redeone.controle_zerar(${evento}) as z`;
+        const [r] = await sql`select redeone.controle_listar(${evento}) as r`;
+        return json({ ok: true, apagados: z.z, ...r.r });
+      }
       case "upload_url": {
-        const caminho = `${evento}/${Date.now()}.pdf`;
+        // PDF da apresentação ou imagem do telão (banner)
+        const ext = { pdf: "pdf", jpg: "jpg", jpeg: "jpg", png: "png", webp: "webp" }[String(b.ext ?? "pdf").toLowerCase()];
+        if (!ext) return json({ ok: false, erro: "tipo" }, 400);
+        const caminho = `${evento}/${Date.now()}.${ext}`;
         const { data, error } = await storage.from("redeone").createSignedUploadUrl(caminho);
         if (error) throw error;
         const publico = storage.from("redeone").getPublicUrl(caminho).data.publicUrl;

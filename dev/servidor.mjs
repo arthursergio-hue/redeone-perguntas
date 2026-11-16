@@ -13,7 +13,8 @@ const RAIZ = join(AQUI, "..", "web");
 const UPLOADS = join(AQUI, "uploads");
 const PIN = process.env.REDEONE_PIN || "1234";
 
-const base = { aprovar_antes: true, aberto: true, banner_url: null, telao_modo: "perguntas", slides_url: null,
+const BANNER = "https://kkhzmvcqcljptlntlmwm.supabase.co/storage/v1/object/public/evento-capas/e242eae2-2ff6-480b-bd83-f569b36a80e1.jpg";
+const base = { aprovar_antes: true, aberto: true, banner_url: BANNER, telao_modo: "imagem", slides_url: null,
   slides_total: null, slide_atual: 1, mostrar_perguntas_slides: true, destaque_id: null, rodada: 0, rodada_fim: null,
   rodada_pausa_s: null, duracao_s: 120, foco_mesa: null, grupos: 4, pergunta_pastor: "", pastor_aberta: false };
 const eventos = new Map([
@@ -178,7 +179,7 @@ function api(b, origem) {
     case "responder_pastor": return [200, responderPastor(id, b)];
     case "responder": return [200, responder(id, b)];
     case "telao": { const t = telao(id); return t ? [200, { ok: true, ...t }] : [404, { ok: false, erro: "evento" }]; }
-    case "entrar": case "listar": case "agir": case "config": case "slide": case "rodada": case "mesas": case "upload_url": case "ativar": {
+    case "entrar": case "listar": case "agir": case "config": case "slide": case "rodada": case "mesas": case "upload_url": case "ativar": case "zerar": {
       if (!ev) return [404, { ok: false, erro: "evento" }];
       if (String(b.pin || "") !== pinAtual) return [401, { ok: false, erro: "pin" }];
       if (b.op === "agir") agir(id, b.id, b.acao);
@@ -197,8 +198,16 @@ function api(b, origem) {
         }
         mesas.set(id, lista.sort((a, c) => a.numero - c.numero));
       }
+      if (b.op === "zerar") {
+        const np = perguntas.filter((p) => p.evento_id === id).length, nr = respostas.filter((r) => r.evento_id === id).length;
+        for (const lista of [perguntas, respostas]) for (let i = lista.length - 1; i >= 0; i--) if (lista[i].evento_id === id) lista.splice(i, 1);
+        Object.assign(ev, { destaque_id: null, pastor_aberta: false, pergunta_pastor: "", rodada: 0, rodada_fim: null, rodada_pausa_s: null, slide_atual: 1 });
+        return [200, { ok: true, apagados: { perguntas: np, respostas: nr }, ...listar(id) }];
+      }
       if (b.op === "upload_url") {
-        const nome = `${id}-${Date.now()}.pdf`;
+        const ext = { pdf: "pdf", jpg: "jpg", jpeg: "jpg", png: "png", webp: "webp" }[String(b.ext || "pdf").toLowerCase()];
+        if (!ext) return [400, { ok: false, erro: "tipo" }];
+        const nome = `${id}-${Date.now()}.${ext}`;
         return [200, { ok: true, local: true, caminho: nome, envio: `/upload/${nome}`, publico: `${origem}/uploads/${nome}` }];
       }
       if (b.op === "config") {
@@ -208,7 +217,7 @@ function api(b, origem) {
         if (c.titulo) ev.titulo = c.titulo.slice(0, 80);
         if (c.subtitulo) ev.subtitulo = c.subtitulo.slice(0, 120);
         if ("banner_url" in c) ev.banner_url = c.banner_url || null;
-        if (["perguntas", "apresentacao", "resposta"].includes(c.telao_modo)) ev.telao_modo = c.telao_modo;
+        if (["perguntas", "imagem", "apresentacao", "resposta"].includes(c.telao_modo)) ev.telao_modo = c.telao_modo;
         if ("slides_url" in c) { ev.slides_url = c.slides_url || null; ev.slides_total = c.slides_total || null; ev.slide_atual = 1; }
         if (Number.isFinite(c.duracao_s)) ev.duracao_s = Math.min(Math.max(c.duracao_s, 30), 1800);
         if ("foco_mesa" in c) ev.foco_mesa = c.foco_mesa;

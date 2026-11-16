@@ -10,8 +10,8 @@ marcada como **NO TELÃO** no controle. O Arthur troca de palestra pelo celular.
 | Tela | Para quem | O que faz |
 |---|---|---|
 | `web/perguntar.html` | público (QR Code) | pergunta ao palestrante, anônima ou com nome (1 a cada 30 s). Quando o pastor abre a pergunta dele, aparece a aba **Responder o pastor** (abre sozinha), anônimo ou com nome (1 a cada 10 s). Filtro de palavrão |
-| `web/telao.html` | projetor | **Perguntas**: cartões ao vivo, fixada em destaque, QR. **Slides**: PDF em tela cheia com a coluna de perguntas; passador/setas (PIN uma vez). **Respostas**: a pergunta do pastor em cima e o mural das respostas, com o total. **Pergunta inteira**: uma pergunta grande com o fundo desfocado |
-| `web/controle.html` | Arthur (PIN) | escolhe a palestra e põe no telão; aprovar, fixar, ocultar, respondida, desfazer, 📺 mostrar inteira; modo do telão (Perguntas / Slides / Respostas); ◀ ▶ com prévia e upload do PDF; **pergunta do pastor**: escrever, abrir e mostrar, encerrar, ocultar respostas; CSV com perguntas e respostas |
+| `web/telao.html` | projetor | **Imagem** (padrão): o banner da conferência (ou outra imagem subida na hora) grande, com as perguntas ao lado e o QR. **Slides**: o PDF no lugar da imagem, passador/setas (PIN uma vez). **Perguntas**: só os cartões. **Respostas**: a pergunta do pastor e o mural. **Pergunta inteira**: uma pergunta grande com o fundo desfocado. Visual em vidro com o banner desfocado ao fundo |
+| `web/controle.html` | Arthur (PIN) | escolhe a palestra e põe no telão; aprovar, fixar, ocultar, respondida, desfazer, 📺 mostrar inteira; modo do telão (Imagem / Slides / Perguntas / Respostas); trocar a imagem na hora ou voltar ao banner oficial; ◀ ▶ com prévia e upload do PDF; ⚙️ apagar o ensaio da palestra; **pergunta do pastor**: escrever, abrir e mostrar, encerrar, ocultar respostas; CSV com perguntas e respostas |
 
 As respostas à pergunta do pastor vão direto ao mural (sem aprovação); o Arthur oculta pelo controle se precisar.
 
@@ -22,7 +22,7 @@ preferiu o papel, que faz parte da metodologia dele.
 
 - Páginas estáticas (sem build). `web/config.js` escolhe o servidor: em `localhost` usa o servidor de teste;
   publicado, usa a Edge Function `redeone` do Supabase da igreja.
-- Banco: schema `redeone` (`supabase/migrations/001…003`). Público não tem acesso às tabelas; tudo passa pela
+- Banco: schema `redeone` (`supabase/migrations/001…004`). Público não tem acesso às tabelas; tudo passa pela
   Edge Function (`supabase/functions/redeone`). Um PIN para a conferência, só como hash, trava após 10 erros em
   10 min. PDFs no bucket público `redeone` (só PDF, até 50 MB), enviados por link assinado depois do PIN.
 - Tempo real: broadcast do banco (`redeone:<evento>` e `redeone:ativo`) + consulta a cada 1,5–5 s.

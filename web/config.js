@@ -79,3 +79,35 @@ window.redeoneTelaCerta = function (modo, telaPerguntas, telaDinamica) {
   if (alvo && !aqui.startsWith(alvo.replace(".html", ""))) { location.replace(alvo + location.search); return true; }
   return false;
 };
+
+// Visual: "Rede One" com o "One" dourado (como no banner) e o fundo desfocado com a imagem da palestra
+window.redeoneMarca = function (el, titulo) {
+  const t = String(titulo || "Rede One").trim();
+  const i = t.lastIndexOf(" ");
+  el.textContent = "";
+  if (i < 0) { el.textContent = t; return; }
+  el.appendChild(document.createTextNode(t.slice(0, i + 1)));
+  const b = document.createElement("b"); b.textContent = t.slice(i + 1); el.appendChild(b);
+};
+window.redeoneFundo = function (url) {
+  if (!url || window._redeoneFundoAtual === url) return;
+  window._redeoneFundoAtual = url;
+  document.documentElement.style.setProperty("--banner", `url("${String(url).replace(/"/g, "")}")`);
+};
+
+// Sobe arquivo (PDF ou imagem) para o bucket "redeone": pede um endereço com o PIN e envia
+window.redeoneSubir = async function (arquivo, pin, aoProgresso) {
+  const ext = (arquivo.name.split(".").pop() || "").toLowerCase();
+  const r = await redeoneApi("upload_url", { pin, ext });
+  if (!r.ok) throw new Error(r.erro || "servidor");
+  aoProgresso?.("Enviando…");
+  if (r.local) {
+    const up = await fetch(r.envio, { method: "PUT", body: arquivo });
+    if (!up.ok) throw new Error("upload");
+  } else {
+    const cli = window.supabase.createClient(REDEONE.supabaseUrl, REDEONE.anon);
+    const { error } = await cli.storage.from("redeone").uploadToSignedUrl(r.caminho, r.token, arquivo, { contentType: arquivo.type || undefined });
+    if (error) throw error;
+  }
+  return r.publico;
+};

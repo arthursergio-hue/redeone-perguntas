@@ -80,9 +80,18 @@
   .pp .mais-resp { width: 100%; margin-top: 8px; background: none; border: 0; color: var(--destaque); font-weight: 700; }
   .links a { display: block; color: var(--destaque); margin: 6px 0; font-size: 14px; word-break: break-all; }
   .apres { background: var(--cartao); border: 1px solid var(--borda); border-radius: 16px; padding: 12px; margin-bottom: 12px; }
-  .modo-telao { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; padding: 4px; border-radius: 12px; background: rgba(0,0,0,.25); }
-  .modo-telao button { border: 0; border-radius: 9px; padding: 10px 6px; background: transparent; color: var(--texto-2); font-weight: 700; font-size: 14px; }
-  .modo-telao button.ativo { background: var(--texto); color: #061a63; }
+  .modo-telao { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 4px; border-radius: 12px; background: rgba(0,0,0,.25); }
+  .modo-telao button { border: 1px solid transparent; border-radius: 14px; padding: 12px 8px 10px; background: transparent; color: var(--texto-2); font-weight: 700; font-size: 15px; display: flex; flex-direction: column; align-items: center; gap: 2px; transition: background .2s, color .2s; }
+  .modo-telao button i { font-style: normal; font-size: 22px; }
+  .modo-telao button small { font-size: 11px; font-weight: 500; color: var(--texto-3); }
+  .modo-telao button.ativo { background: var(--ouro); color: #0a1a55; box-shadow: inset 0 1px 0 rgba(255,255,255,.5), 0 8px 24px rgba(217,161,42,.3); }
+  .modo-telao button.ativo small { color: rgba(10,26,85,.7); }
+  .rot-sec { font-size: 12px; font-weight: 800; letter-spacing: .2em; text-transform: uppercase; color: var(--destaque); margin: 2px 2px 10px; }
+  .img-previa { border-radius: 14px; overflow: hidden; aspect-ratio: 16 / 9; background: rgba(0,0,0,.3); box-shadow: 0 0 0 1px rgba(255,255,255,.18), 0 12px 30px rgba(0,4,30,.4); }
+  .img-previa img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .painel-modo .linha2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+  .painel-modo .linha2 .btn { font-size: 14px; padding: 12px 6px; cursor: pointer; }
+  .perigo { width: 100%; margin-top: 4px; font-size: 14px; color: #ffb3c0 !important; border-color: rgba(255,107,129,.45) !important; }
   #apres-corpo { margin-top: 12px; display: grid; gap: 10px; }
   .slide-nav { display: grid; grid-template-columns: 64px 1fr 64px; gap: 8px; align-items: stretch; }
   .slide-nav .nav { border: 0; border-radius: 14px; background: var(--destaque); color: #061a63; font-size: 26px; font-weight: 900; }
@@ -113,7 +122,7 @@
 
   <section class="oculto" id="painel">
     <div class="cab">
-      <div class="marca" id="titulo">Rede One</div>
+      <div class="marca" id="titulo">Rede <b>One</b></div>
       <div class="menu">
         <button class="icone-btn" id="abrir-telao" title="Abrir telão">🖥️</button>
         <button class="icone-btn" id="abrir-ajustes" title="Ajustes">⚙️</button>
@@ -130,21 +139,33 @@
 
     <section class="apres" id="apres">
       <div class="apres-topo">
+        <div class="rot-sec">📺 O que o telão mostra</div>
         <div class="modo-telao" role="tablist" aria-label="O que o telão mostra">
-          <button data-modo="perguntas">💬 Perguntas</button>
-          <button data-modo="apresentacao">🎞️ Slides</button>
-          <button data-modo="resposta">🗳️ Respostas</button>
+          <button data-modo="imagem"><i>🖼️</i>Imagem<small>banner + perguntas</small></button>
+          <button data-modo="apresentacao"><i>🎞️</i>Slides<small>PDF + perguntas</small></button>
+          <button data-modo="perguntas"><i>💬</i>Perguntas<small>só os cartões</small></button>
+          <button data-modo="resposta"><i>🗳️</i>Respostas<small>pergunta do pastor</small></button>
         </div>
       </div>
       <div id="apres-corpo">
+        <div class="painel-modo" id="pm-imagem">
+          <div class="img-previa"><img id="img-previa" alt="Imagem do telão"></div>
+          <div class="linha2">
+            <label class="btn sec subir-img"><input type="file" id="arquivo-img" accept="image/jpeg,image/png,image/webp" hidden><span id="subir-img-txt">🖼️ Trocar imagem</span></label>
+            <button class="btn sec" id="img-banner">↺ Banner oficial</button>
+          </div>
+        </div>
         <div class="slide-nav" id="slide-nav">
           <button class="nav" id="s-ant" aria-label="Slide anterior">◀</button>
           <div class="previa"><canvas id="previa"></canvas><span id="s-num">–</span></div>
           <button class="nav" id="s-prox" aria-label="Próximo slide">▶</button>
         </div>
-        <div class="chave"><span>Perguntas por cima dos slides</span><button class="sw" id="sw-lado" aria-label="Perguntas por cima dos slides"></button></div>
-        <label class="subir"><input type="file" id="arquivo" accept="application/pdf,.pdf" hidden><span id="subir-txt">⬆️ Subir apresentação (PDF)</span></label>
-        <p class="dica-pdf">PowerPoint, Keynote ou Canva: <b>Salvar/Baixar como PDF</b>. No computador da igreja, abra o telão e passe os slides pelo passador ou pelas setas.</p>
+        <div class="painel-modo" id="pm-slides">
+          <label class="subir"><input type="file" id="arquivo" accept="application/pdf,.pdf" hidden><span id="subir-txt">⬆️ Subir apresentação (PDF)</span></label>
+          <p class="dica-pdf">PowerPoint, Keynote ou Canva: <b>Salvar/Baixar como PDF</b>. No computador da igreja, passe os slides pelo passador ou pelas setas.</p>
+        </div>
+        <div class="chave" id="chave-lado"><span>Perguntas ao lado</span><button class="sw" id="sw-lado" aria-label="Perguntas ao lado"></button></div>
+        <p class="dica-pdf" id="dica-modo"></p>
       </div>
     </section>
 
@@ -186,6 +207,8 @@
   <label for="a-sub">Frase do topo</label><input id="a-sub" maxlength="120">
   <label for="a-banner">Endereço da imagem do banner (deixe vazio para o fundo padrão)</label><input id="a-banner" maxlength="500" placeholder="https://…/banner.jpg">
   <label for="a-pin">Novo PIN (opcional, 4 a 12 dígitos)</label><input id="a-pin" inputmode="numeric" maxlength="12">
+  <label>Antes do evento</label>
+  <button class="btn sec perigo" id="a-zerar" type="button">🧹 Apagar perguntas e respostas desta palestra</button>
   <label>Links</label>
   <div class="links" id="links"></div>
   <div class="linha"><button class="btn sec" id="a-cancelar">Cancelar</button><button class="btn" id="a-salvar">Salvar</button></div>
@@ -280,7 +303,7 @@
 
   function render() {
     const ev = dados.evento || {};
-    $("titulo").textContent = ev.titulo || "Rede One";
+    redeoneMarca($("titulo"), ev.titulo || "Rede One");
     $("sw-aprovar").classList.toggle("on", !!ev.aprovar_antes);
     $("sw-aberto").classList.toggle("on", !!ev.aberto);
     const cont = { pendente: 0, aprovada: 0, respondida: 0, oculta: 0 };
@@ -485,7 +508,20 @@
     document.querySelectorAll(".modo-telao button").forEach((b) => b.classList.toggle("ativo", b.dataset.modo === modo));
     $("sw-lado").classList.toggle("on", !!ev.mostrar_perguntas_slides);
     const tem = !!ev.slides_url;
-    $("slide-nav").classList.toggle("oculto", !tem);
+    $("pm-imagem").classList.toggle("oculto", modo !== "imagem");
+    $("pm-slides").classList.toggle("oculto", modo !== "apresentacao");
+    $("chave-lado").classList.toggle("oculto", !["imagem", "apresentacao"].includes(modo));
+    $("dica-modo").textContent = {
+      imagem: "O telão mostra a imagem grande e as perguntas aprovadas ao lado, com o QR Code.",
+      apresentacao: tem ? "O telão mostra o slide grande e as perguntas ao lado. Passe pelos botões ◀ ▶ ou pelo passador." : "Suba o PDF para os slides aparecerem. Até lá o telão mostra a imagem.",
+      perguntas: "O telão mostra só os cartões das perguntas, com o banner desfocado ao fundo.",
+      resposta: "O telão mostra a pergunta do pastor e o mural de respostas (veja o bloco abaixo).",
+    }[modo];
+    const img = ev.banner_url || BANNER_OFICIAL;
+    if ($("img-previa").getAttribute("src") !== img) $("img-previa").src = img;
+    redeoneFundo(img);
+    $("img-banner").disabled = !ev.banner_url || ev.banner_url === BANNER_OFICIAL;
+    $("slide-nav").classList.toggle("oculto", !tem || modo !== "apresentacao");
     $("subir-txt").textContent = tem ? `🔁 Trocar apresentação (${ev.slides_total || "?"} slides)` : "⬆️ Subir apresentação (PDF)";
     $("s-num").textContent = tem ? `${ev.slide_atual} / ${ev.slides_total || "?"}` : "–";
     if (!tem || !window.pdfjsLib) return;
@@ -535,7 +571,7 @@
       etiqueta.textContent = "Lendo o PDF…";
       const doc = await pdfjsLib.getDocument({ data: new Uint8Array(await f.arrayBuffer()) }).promise;
       const total = doc.numPages;
-      const url = await redeoneSubirPdf(f, pin, (m) => etiqueta.textContent = m);
+      const url = await redeoneSubir(f, pin, (m) => etiqueta.textContent = m);
       etiqueta.textContent = "Ligando no telão…";
       await chamar("config", { cfg: { slides_url: url, slides_total: total, telao_modo: "apresentacao" } });
       toast(`Apresentação no telão · ${total} slides ✅`);
@@ -543,6 +579,34 @@
       etiqueta.textContent = antes;
       if (e.message !== "pin") toast("Não consegui subir o PDF. Tente de novo.");
     }
+  };
+
+  // ── Imagem do telão: trocar na hora ou voltar ao banner oficial ──
+  const BANNER_OFICIAL = "https://kkhzmvcqcljptlntlmwm.supabase.co/storage/v1/object/public/evento-capas/e242eae2-2ff6-480b-bd83-f569b36a80e1.jpg";
+  $("arquivo-img").onchange = async () => {
+    const f = $("arquivo-img").files[0]; $("arquivo-img").value = "";
+    if (!f) return;
+    if (!/^image\/(jpeg|png|webp)$/.test(f.type)) { toast("Use uma imagem JPG, PNG ou WEBP."); return; }
+    if (f.size > 15 * 1024 * 1024) { toast("A imagem passou de 15 MB. Use uma menor."); return; }
+    const etq = $("subir-img-txt"); const antes = etq.textContent;
+    try {
+      etq.textContent = "Enviando…";
+      const url = await redeoneSubir(f, pin);
+      await chamar("config", { cfg: { banner_url: url, telao_modo: "imagem" } });
+      toast("🖼️ Imagem nova no telão");
+    } catch (e) { if (e.message !== "pin") toast("Não consegui subir a imagem. Tente de novo."); }
+    finally { etq.textContent = antes; }
+  };
+  $("img-banner").onclick = () => config({ banner_url: BANNER_OFICIAL }).then(() => toast("Banner oficial de volta"));
+
+  // ── Limpar o ensaio antes do evento ──
+  $("a-zerar").onclick = async () => {
+    const nome = (dados.evento.subtitulo || "").split("·").pop().trim();
+    const n = dados.perguntas.length + (dados.respostas || []).length;
+    const ok = prompt(`Apagar ${n} perguntas e respostas da palestra do ${nome}? Isso não tem volta.\n\nPara confirmar, digite APAGAR`);
+    if ((ok || "").trim().toUpperCase() !== "APAGAR") { toast("Nada foi apagado."); return; }
+    try { const r = await chamar("zerar"); $("ajustes").close(); toast(`🧹 Apagadas ${r.apagados.perguntas} perguntas e ${r.apagados.respostas} respostas`); }
+    catch (e) { if (e.message !== "pin") toast("Não deu certo. Confira a conexão."); }
   };
 
   setInterval(() => pin && render(), 30000); // atualiza o "há X min"

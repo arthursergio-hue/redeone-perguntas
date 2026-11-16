@@ -47,6 +47,12 @@ Limite de 1 pergunta / 30 s por aparelho, filtro de palavrão, tempo real, celul
 - Novo: "palestra no telão" (um QR e um telão para a conferência; o Arthur troca no controle), PIN único.
 - Migração 003 aplicada no Supabase. Edge Function e site ainda **não publicados** (Arthur disse "ainda não").
 
+## Situação em 16/11/2026 (4ª etapa)
+- Visual premium (vidro, dourado, banner desfocado ao fundo) nas telas do celular, telão e controle.
+- Telão com 4 opções no controle: Imagem (banner oficial por padrão, trocável na hora), Slides, Perguntas e Respostas.
+  As duas palestras começam em Imagem. Migração 004 aplicada (bucket aceita imagens, `controle_zerar`).
+- Antes do evento: ⚙️ → "Apagar perguntas e respostas desta palestra" limpa o ensaio.
+
 ## Falta do Arthur
 Nome do endereço (sugestão `redeone-perguntas`), arquivo das apresentações, as 4 perguntas do Pastor Paulo.
 

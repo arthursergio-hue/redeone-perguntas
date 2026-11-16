@@ -11,24 +11,28 @@
 <style>
   main { max-width: 520px; margin: 0 auto; padding: 28px 16px 40px; min-height: 100dvh; display: flex; flex-direction: column; }
   header { text-align: center; margin-bottom: 18px; }
-  header .marca { font-size: 34px; }
-  header p { margin: 6px 0 0; color: var(--texto-2); font-size: 17px; }
-  .painel { background: var(--cartao); border: 1px solid var(--borda); border-radius: var(--raio); padding: 18px; box-shadow: var(--sombra); backdrop-filter: blur(8px); }
-  .abas { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 5px; border-radius: 16px; background: rgba(0,0,0,.25); border: 1px solid var(--borda); margin-bottom: 14px; }
+  .capa { position: relative; border-radius: 20px; overflow: hidden; aspect-ratio: 1600 / 893; box-shadow: 0 0 0 1px rgba(255,255,255,.18), 0 22px 60px rgba(0,4,30,.6), 0 0 80px rgba(47,107,255,.25); }
+  .capa img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .capa::after { content: ""; position: absolute; inset: 0; border-radius: inherit; box-shadow: inset 0 1px 0 rgba(255,255,255,.35); pointer-events: none; }
+  header .palestra { margin: 16px 0 0; font-size: 13px; font-weight: 700; letter-spacing: .22em; text-transform: uppercase; color: var(--destaque); }
+  header p { margin: 4px 0 0; color: #fff; font-size: 19px; font-weight: 500; }
+  header .marca { display: none; }
+  .painel { padding: 18px; }
+  .abas { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 5px; border-radius: 18px; background: var(--cartao); border: 1px solid var(--borda); box-shadow: var(--brilho); margin-bottom: 14px; }
   .abas button { border: 0; border-radius: 12px; padding: 12px 6px; background: transparent; color: var(--texto-2); font-weight: 700; font-size: 15px; }
-  .abas button.ativo { background: var(--destaque); color: #061a63; }
-  .pastor { border-radius: 16px; padding: 16px; margin-bottom: 14px; background: linear-gradient(135deg, rgba(245,200,66,.22), rgba(245,200,66,.08)); border: 2px solid rgba(245,200,66,.8); }
+  .abas button.ativo { background: var(--ouro); color: #0a1a55; box-shadow: inset 0 1px 0 rgba(255,255,255,.5), 0 8px 22px rgba(217,161,42,.3); }
+  .pastor { border-radius: 18px; padding: 16px 16px 18px; margin-bottom: 16px; background: linear-gradient(140deg, rgba(244,205,92,.24), rgba(244,205,92,.06)); border: 1px solid rgba(244,205,92,.7); box-shadow: inset 0 1px 0 rgba(255,255,255,.25), 0 10px 30px rgba(217,161,42,.15); }
   .pastor .rot { font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--destaque); }
   .pastor .perg { font-size: 21px; font-weight: 700; line-height: 1.3; margin-top: 6px; }
   label.titulo { display: block; font-weight: 700; font-size: 16px; margin-bottom: 8px; }
-  textarea { width: 100%; min-height: 130px; resize: vertical; border-radius: 14px; padding: 14px; background: rgba(0,0,0,.25); border: 1px solid var(--borda); font-size: 18px; line-height: 1.4; outline: none; }
-  textarea:focus, input[type=text]:focus { border-color: var(--destaque); }
+  textarea { width: 100%; min-height: 130px; resize: vertical; border-radius: 16px; padding: 15px; background: rgba(4,16,64,.42); border: 1px solid var(--borda); box-shadow: inset 0 2px 10px rgba(0,0,0,.25); font-size: 18px; line-height: 1.45; outline: none; transition: border-color .2s, box-shadow .2s; }
+  textarea:focus, input[type=text]:focus { border-color: rgba(244,205,92,.8); box-shadow: inset 0 2px 10px rgba(0,0,0,.25), 0 0 0 4px rgba(244,205,92,.14); }
   .contador { text-align: right; font-size: 13px; color: var(--texto-3); margin-top: 6px; }
   .contador.alto { color: var(--destaque-2); }
-  .seg { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 5px; border-radius: 14px; background: rgba(0,0,0,.25); border: 1px solid var(--borda); margin: 16px 0 12px; }
+  .seg { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 5px; border-radius: 16px; background: rgba(4,16,64,.38); border: 1px solid var(--borda); margin: 16px 0 12px; }
   .seg button { border: 0; border-radius: 10px; padding: 11px 8px; background: transparent; color: var(--texto-2); font-weight: 600; font-size: 15px; }
-  .seg button.ativo { background: var(--cartao-forte); color: var(--texto); box-shadow: inset 0 0 0 1px var(--borda); }
-  input[type=text] { width: 100%; border-radius: 14px; padding: 13px 14px; background: rgba(0,0,0,.25); border: 1px solid var(--borda); font-size: 17px; outline: none; }
+  .seg button.ativo { background: var(--cartao-forte); color: var(--texto); box-shadow: var(--brilho), 0 0 0 1px rgba(255,255,255,.22); }
+  input[type=text] { width: 100%; border-radius: 16px; padding: 14px 15px; background: rgba(4,16,64,.42); border: 1px solid var(--borda); font-size: 17px; outline: none; }
   .dica { font-size: 13px; color: var(--texto-3); margin: 8px 2px 0; }
   .acoes { margin-top: 18px; }
   .acoes .btn { width: 100%; padding: 16px; }
@@ -45,7 +49,9 @@
 <body>
 <main>
   <header>
+    <div class="capa"><img id="capa" alt="Conferência Rede One" src="https://kkhzmvcqcljptlntlmwm.supabase.co/storage/v1/object/public/evento-capas/e242eae2-2ff6-480b-bd83-f569b36a80e1.jpg"></div>
     <div class="marca" id="titulo">Rede One</div>
+    <div class="palestra" id="quem">Palestra</div>
     <p id="subtitulo">Mande sua pergunta</p>
   </header>
 
@@ -215,7 +221,10 @@
       if (!r.ok) return;
       if (redeoneTelaCerta(r.evento.modo, "perguntar.html", "dinamica.html")) return;
       const ev = r.evento;
-      $("titulo").textContent = ev.titulo; $("subtitulo").textContent = ev.subtitulo;
+      redeoneMarca($("titulo"), ev.titulo);
+      const partes = ev.subtitulo.split("·").map((x) => x.trim());
+      $("subtitulo").textContent = partes[0]; $("quem").textContent = partes[1] || "Palestra";
+      if (ev.banner_url) { if ($("capa").getAttribute("src") !== ev.banner_url) $("capa").src = ev.banner_url; redeoneFundo(ev.banner_url); }
       document.title = `${ev.titulo} · Perguntas`;
       // troca de palestra no telão: recomeça limpo
       if (evento && evento !== r.evento_id) { perguntaVista = null; }

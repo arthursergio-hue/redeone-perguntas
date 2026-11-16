@@ -1,64 +1,92 @@
+/* Rede One · identidade premium (azul royal profundo, dourado e vidro), tirada do banner da conferência */
 :root {
-  /* identidade da Conferência Rede One (banner): azul royal, dourado e branco */
-  --fundo: #061a63;
-  --fundo-2: #0b2a8c;
-  --cartao: rgba(255, 255, 255, 0.09);
-  --cartao-forte: rgba(255, 255, 255, 0.16);
-  --borda: rgba(255, 255, 255, 0.18);
+  --fundo: #04103f;
+  --fundo-2: #0a2a8c;
+  /* vidro */
+  --cartao: linear-gradient(145deg, rgba(255, 255, 255, 0.13), rgba(255, 255, 255, 0.04));
+  --cartao-forte: linear-gradient(145deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.08));
+  --borda: rgba(255, 255, 255, 0.16);
+  --brilho: inset 0 1px 0 rgba(255, 255, 255, 0.22), inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+  --desfoque: blur(22px) saturate(1.45);
   --texto: #ffffff;
-  --texto-2: rgba(255, 255, 255, 0.78);
+  --texto-2: rgba(255, 255, 255, 0.8);
   --texto-3: rgba(255, 255, 255, 0.55);
-  --destaque: #f5c842;
-  --destaque-2: #e8a91c;
+  /* dourado da conferência */
+  --destaque: #f4cd5c;
+  --destaque-2: #d9a12a;
+  --ouro: linear-gradient(135deg, #fbe39a 0%, #f4cd5c 38%, #d9a12a 100%);
   --roxo: #2f6bff;
-  --verde: #2fd38a;
-  --vermelho: #ff5c7a;
-  --raio: 18px;
-  --sombra: 0 18px 50px rgba(0, 0, 0, 0.35);
+  --verde: #34d399;
+  --vermelho: #ff6b81;
+  --raio: 22px;
+  --sombra: 0 24px 70px rgba(0, 4, 30, 0.55);
+  --banner: url("https://kkhzmvcqcljptlntlmwm.supabase.co/storage/v1/object/public/evento-capas/e242eae2-2ff6-480b-bd83-f569b36a80e1.jpg");
 }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html, body { margin: 0; min-height: 100%; }
 body {
   font-family: "Outfit", system-ui, -apple-system, "Segoe UI", sans-serif;
-  color: var(--texto);
-  background: var(--fundo);
-  background-image:
-    radial-gradient(1200px 600px at 10% -10%, rgba(47, 107, 255, 0.55), transparent 60%),
-    radial-gradient(900px 500px at 110% 110%, rgba(64, 160, 255, 0.35), transparent 60%);
-  background-attachment: fixed;
+  color: var(--texto); background: var(--fundo);
+  -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+}
+/* Fundo: o banner da conferência bem desfocado, com véu azul e luz dourada. Fica atrás de tudo. */
+body::before {
+  content: ""; position: fixed; inset: -60px; z-index: -2;
+  background: var(--banner) center / cover no-repeat;
+  filter: blur(46px) saturate(1.35) brightness(.8); transform: scale(1.15);
+}
+body::after {
+  content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  background:
+    radial-gradient(900px 520px at 85% -5%, rgba(244, 205, 92, 0.16), transparent 62%),
+    radial-gradient(900px 600px at 0% 105%, rgba(47, 107, 255, 0.28), transparent 60%),
+    linear-gradient(180deg, rgba(3, 12, 48, 0.55), rgba(3, 12, 48, 0.82));
 }
 button { font: inherit; cursor: pointer; }
 input, textarea { font: inherit; color: inherit; }
-.marca {
-  font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase;
-  background: linear-gradient(90deg, var(--destaque), var(--destaque-2));
-  -webkit-background-clip: text; background-clip: text; color: transparent;
+::selection { background: rgba(244, 205, 92, .35); }
+
+/* "Rede One": Rede em branco fino, One em dourado — como no banner */
+.marca { font-weight: 300; letter-spacing: -0.01em; line-height: 1; color: #fff; white-space: nowrap; }
+.marca b { font-weight: 600; background: var(--ouro); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.selo-conf {
+  display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: .32em; text-transform: uppercase;
+  color: var(--destaque); padding: 6px 12px 6px 15px; border: 1px solid rgba(244, 205, 92, .55); border-radius: 10px;
 }
+
+/* Vidro aplicado a todos os blocos das telas */
+.vidro, .painel, .item, .chave, .apres, .pp, .bloco, .card, .mini, .rc, .seg, .abas, .modo-telao, .palestras button, dialog, .toast {
+  backdrop-filter: var(--desfoque); -webkit-backdrop-filter: var(--desfoque);
+}
+.vidro, .painel { background: var(--cartao); border: 1px solid var(--borda); border-radius: var(--raio); box-shadow: var(--brilho), var(--sombra); }
+
 .btn {
+  position: relative; overflow: hidden;
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-  border: 0; border-radius: 14px; padding: 14px 18px; font-weight: 700; font-size: 17px;
-  color: #061a63; background: linear-gradient(90deg, var(--destaque), var(--destaque-2));
-  box-shadow: 0 10px 30px rgba(245, 200, 66, 0.35); transition: transform .12s, opacity .2s;
+  border: 0; border-radius: 16px; padding: 15px 20px; font-weight: 700; font-size: 17px; letter-spacing: .01em;
+  color: #0a1a55; background: var(--ouro);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .55), 0 12px 34px rgba(217, 161, 42, 0.35);
+  transition: transform .14s, opacity .2s, box-shadow .2s;
 }
+.btn::after { /* reflexo que passa no botão */
+  content: ""; position: absolute; inset: 0; transform: translateX(-120%);
+  background: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, .45) 50%, transparent 65%);
+  transition: transform .7s;
+}
+.btn:hover::after { transform: translateX(120%); }
 .btn:active { transform: scale(0.97); }
-.btn[disabled] { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
-.btn.sec { background: var(--cartao-forte); color: var(--texto); box-shadow: none; border: 1px solid var(--borda); }
+.btn[disabled] { opacity: 0.45; cursor: not-allowed; box-shadow: none; }
+.btn.sec { background: var(--cartao-forte); color: var(--texto); box-shadow: var(--brilho); border: 1px solid var(--borda); }
 .oculto { display: none !important; }
-.spinner {
-  width: 18px; height: 18px; border-radius: 50%;
-  border: 3px solid rgba(0,0,0,.2); border-top-color: currentColor; animation: gira .8s linear infinite;
-}
+.spinner { width: 18px; height: 18px; border-radius: 50%; border: 3px solid rgba(0,0,0,.2); border-top-color: currentColor; animation: gira .8s linear infinite; }
 @keyframes gira { to { transform: rotate(360deg); } }
-.aviso {
-  border-radius: 14px; padding: 12px 14px; font-size: 15px; line-height: 1.35;
-  background: rgba(255, 92, 122, 0.14); border: 1px solid rgba(255, 92, 122, 0.45);
-}
-.aviso.ok { background: rgba(47, 211, 138, 0.14); border-color: rgba(47, 211, 138, 0.45); }
+.aviso { border-radius: 14px; padding: 12px 14px; font-size: 15px; line-height: 1.35; background: rgba(255, 107, 129, 0.14); border: 1px solid rgba(255, 107, 129, 0.45); }
+.aviso.ok { background: rgba(52, 211, 153, 0.14); border-color: rgba(52, 211, 153, 0.45); }
 .toast {
-  position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%) translateY(120px);
-  background: #1d2354; border: 1px solid var(--borda); color: var(--texto);
-  padding: 12px 16px; border-radius: 14px; display: flex; gap: 14px; align-items: center;
-  box-shadow: var(--sombra); transition: transform .25s; z-index: 50; max-width: calc(100vw - 32px);
+  position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%) translateY(140px);
+  background: rgba(10, 26, 85, .72); border: 1px solid var(--borda); color: var(--texto);
+  padding: 13px 18px; border-radius: 16px; display: flex; gap: 14px; align-items: center;
+  box-shadow: var(--brilho), var(--sombra); transition: transform .3s cubic-bezier(.2,.9,.25,1.1); z-index: 50; max-width: calc(100vw - 32px);
 }
 .toast.vis { transform: translateX(-50%) translateY(0); }
 .toast button { background: none; border: 0; color: var(--destaque); font-weight: 700; }
