@@ -53,6 +53,24 @@ Limite de 1 pergunta / 30 s por aparelho, filtro de palavrão, tempo real, celul
   As duas palestras começam em Imagem. Migração 004 aplicada (bucket aceita imagens, `controle_zerar`).
 - Antes do evento: ⚙️ → "Apagar perguntas e respostas desta palestra" limpa o ensaio.
 
+## Situação em 16/11/2026 (5ª etapa, PARADA NO MEIO, retomar daqui)
+- NO AR: site https://arthursergio-hue.github.io/redeone-perguntas/ (repo público arthursergio-hue/redeone-perguntas,
+  Pages publica `web/` a cada push) e Edge Function `redeone` v2 no Supabase da igreja. PIN real: arquivo fora do
+  repo (o Arthur sabe; 6 dígitos). Banco zerado, Pastor Pedro no telão, modo Imagem.
+- Capas novas (Magnific, 390 créditos no total): `capas/` e `web/capas/capa-pastor-{pedro,paulo}-v2.jpg`
+  (Pedro: família no Natal, sem cruz; Paulo: voluntários servindo). FALTA: depois do push, apontar
+  `banner_url` das duas palestras para as URLs `-v2` (hoje apontam para as antigas sem -v2, que saíram do site).
+- CARGA (pergunta do Arthur: "vai dar para várias pessoas ao mesmo tempo?"): teste `dev/teste-carga.mjs` com 300
+  celulares no mesmo IP deu 30–50% de erro 500. Causa nos logs: "sorry, too many clients already" — a função
+  abre conexão DIRETA no Postgres (SUPABASE_DB_URL) e esgota as vagas (afeta também o app da igreja!).
+  Já feito: migração 005 (consulta leve `estado`, limite por IP 600/min, PIN trava só com 40 erros), celular
+  sem Realtime e consultando `estado` a cada 12 s, função com idle_timeout.
+  FALTA (próximo passo): trocar a conexão da função para o POOLER do Supabase (Supavisor, modo transação,
+  porta 6543, usuário `postgres.kkhzmvcqcljptlntlmwm`, host `aws-1-us-east-1.pooler.supabase.com` (CONFIRMADO), mesma senha
+  do SUPABASE_DB_URL) com `max: 1`, ou cache curto do `estado`/`telao`. Estava descobrindo a região (script de
+  socket testando hosts). Depois: republicar a função, rodar de novo `REDEONE_PIN=... node dev/teste-carga.mjs 300`
+  até 0 falhas, conferir os logs e limpar (o script já zera a palestra no telão).
+
 ## Falta do Arthur
 Nome do endereço (sugestão `redeone-perguntas`), arquivo das apresentações, as 4 perguntas do Pastor Paulo.
 

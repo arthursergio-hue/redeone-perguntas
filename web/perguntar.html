@@ -101,7 +101,6 @@
 </main>
 <div class="toast" id="toast"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="config.js"></script>
 <script>
 (() => {
@@ -220,7 +219,7 @@
 
   async function carregar() {
     try {
-      const r = await redeoneApi("telao");
+      const r = await redeoneApi("estado");
       if (!r.ok) return;
       if (redeoneTelaCerta(r.evento.modo, "perguntar.html", "dinamica.html")) return;
       const ev = r.evento;
@@ -251,7 +250,11 @@
   modo(comNome);
   carregar();
   setTimeout(() => document.body.classList.remove("carregando"), 8000);   // sem internet: libera mesmo assim
-  redeoneAoVivo(carregar, 5000);
+  // Celulares não abrem conexão ao vivo (o Supabase grátis aceita só 200 de uma vez):
+  // consultam o estado a cada 12 s e na hora em que a pessoa volta para a tela.
+  setInterval(() => { if (!document.hidden) carregar(); }, 12000);
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) carregar(); });
+  window.addEventListener("focus", carregar);
 })();
 </script>
 </body>

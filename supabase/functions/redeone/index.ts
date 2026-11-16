@@ -3,7 +3,7 @@
 import postgres from "npm:postgres@3.4.5";
 import { createClient } from "npm:@supabase/supabase-js@2.45.4";
 
-const sql = postgres(Deno.env.get("SUPABASE_DB_URL")!, { prepare: false, max: 3 });
+const sql = postgres(Deno.env.get("SUPABASE_DB_URL")!, { prepare: false, max: 3, idle_timeout: 10, connect_timeout: 10 });
 const storage = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!).storage;
 const SAL = "redeone-2026";
 
@@ -58,6 +58,11 @@ Deno.serve(async (req) => {
       const [r] = await sql`select redeone.responder_pastor(${evento}, ${String(b.texto ?? "")},
         ${b.nome ? String(b.nome) : null}, ${String(b.dispositivo ?? "")}, ${ip}) as r`;
       return json(r.r);
+    }
+    if (b.op === "estado") {   // consulta leve dos celulares
+      const [r] = await sql`select redeone.estado(${evento}) as r`;
+      if (!r.r) return json({ ok: false, erro: "evento" }, 404);
+      return json({ ok: true, ...r.r });
     }
     if (b.op === "telao") {
       const [r] = await sql`select redeone.telao(${evento}) as r`;

@@ -606,7 +606,7 @@
   };
   $("img-banner").onclick = () => config({ banner_url: BANNER_OFICIAL }).then(() => toast("Banner oficial de volta"));
   // capas de cada palestra (feitas no Magnific), publicadas junto com o site em web/capas/
-  const CAPAS = { "rede-one-2026": "capas/capa-pastor-pedro.jpg", "rede-one-paulo": "capas/capa-pastor-paulo.jpg" };
+  const CAPAS = { "rede-one-2026": "capas/capa-pastor-pedro-v2.jpg", "rede-one-paulo": "capas/capa-pastor-paulo-v2.jpg" };
   function capaDe(id) { return CAPAS[id] ? new URL(CAPAS[id], location.href).href : null; }
   $("img-capa").onclick = () => config({ banner_url: capaDe(dados.evento_id), telao_modo: "imagem" }).then(() => toast("🎨 Capa da palestra no telão"));
 

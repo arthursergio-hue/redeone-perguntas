@@ -178,6 +178,9 @@ function api(b, origem) {
     case "enviar": return [200, enviar(id, b)];
     case "responder_pastor": return [200, responderPastor(id, b)];
     case "responder": return [200, responder(id, b)];
+    case "estado": { if (!ev) return [404, { ok: false, erro: "evento" }];
+      const { titulo, subtitulo, banner_url, aberto, modo, pergunta_pastor, pastor_aberta } = ev;
+      return [200, { ok: true, evento_id: id, evento: { titulo, subtitulo, banner_url, aberto, modo, pergunta_pastor, pastor_aberta } }]; }
     case "telao": { const t = telao(id); return t ? [200, { ok: true, ...t }] : [404, { ok: false, erro: "evento" }]; }
     case "entrar": case "listar": case "agir": case "config": case "slide": case "rodada": case "mesas": case "upload_url": case "ativar": case "zerar": {
       if (!ev) return [404, { ok: false, erro: "evento" }];
