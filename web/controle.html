@@ -155,6 +155,9 @@
             <label class="btn sec subir-img"><input type="file" id="arquivo-img" accept="image/jpeg,image/png,image/webp" hidden><span id="subir-img-txt">🖼️ Trocar imagem</span></label>
             <button class="btn sec" id="img-banner">↺ Banner oficial</button>
           </div>
+          <div class="linha2">
+            <button class="btn sec" id="img-capa" style="grid-column: 1 / -1">🎨 Capa desta palestra</button>
+          </div>
         </div>
         <div class="slide-nav" id="slide-nav">
           <button class="nav" id="s-ant" aria-label="Slide anterior">◀</button>
@@ -522,6 +525,9 @@
     if ($("img-previa").getAttribute("src") !== img) $("img-previa").src = img;
     redeoneFundo(img);
     $("img-banner").disabled = !ev.banner_url || ev.banner_url === BANNER_OFICIAL;
+    const capa = capaDe(dados.evento_id);
+    $("img-capa").classList.toggle("oculto", !capa);
+    $("img-capa").disabled = !capa || ev.banner_url === capa;
     $("slide-nav").classList.toggle("oculto", !tem || modo !== "apresentacao");
     $("subir-txt").textContent = tem ? `🔁 Trocar apresentação (${ev.slides_total || "?"} slides)` : "⬆️ Subir apresentação (PDF)";
     $("s-num").textContent = tem ? `${ev.slide_atual} / ${ev.slides_total || "?"}` : "–";
@@ -599,6 +605,10 @@
     finally { etq.textContent = antes; }
   };
   $("img-banner").onclick = () => config({ banner_url: BANNER_OFICIAL }).then(() => toast("Banner oficial de volta"));
+  // capas de cada palestra (feitas no Magnific), publicadas junto com o site em web/capas/
+  const CAPAS = { "rede-one-2026": "capas/capa-pastor-pedro.jpg", "rede-one-paulo": "capas/capa-pastor-paulo.jpg" };
+  function capaDe(id) { return CAPAS[id] ? new URL(CAPAS[id], location.href).href : null; }
+  $("img-capa").onclick = () => config({ banner_url: capaDe(dados.evento_id), telao_modo: "imagem" }).then(() => toast("🎨 Capa da palestra no telão"));
 
   // ── Limpar o ensaio antes do evento ──
   $("a-zerar").onclick = async () => {
